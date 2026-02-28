@@ -91,10 +91,10 @@ def admin():
     # Sorting logic
     if sort == "id_asc":
         order_by = "id ASC"
-    elif sort == "date_desc":
-        order_by = "date DESC"
-    elif sort == "date_asc":
-        order_by = "date ASC"
+    elif sort == "created_at_desc":
+        order_by = "created_at DESC"
+    elif sort == "created_at_asc":
+        order_by = "created_at ASC"
     else:
         order_by = "id DESC"
 
@@ -193,19 +193,6 @@ def toggle(id):
     return redirect('/admin')
 
 
-# @app.route('/login', methods=['GET', 'POST'])
-# def login():
-#     if request.method == 'POST':
-#         username = request.form['username']
-#         password = request.form['password']
-
-#         if username == "admin" and password == "1234":
-#             session['admin'] = True
-#             return redirect('/admin')
-#         else:
-#             return "Invalid Credentials"
-
-#     return render_template('login.html')
 
 
 
@@ -230,6 +217,8 @@ def login():
             return "Invalid Credentials"
 
     return render_template('login.html')
+
+
 
 #For Logout
 

@@ -55,8 +55,8 @@
     <select name="sort" onchange="this.form.submit()" style="padding:8px;">
         <option value="id_desc" {% if sort=='id_desc' %}selected{% endif %}>ID - Newest First</option>
         <option value="id_asc" {% if sort=='id_asc' %}selected{% endif %}>ID - Oldest First</option>
-        <option value="date_desc" {% if sort=='date_desc' %}selected{% endif %}>Date - Newest First</option>
-        <option value="date_asc" {% if sort=='date_asc' %}selected{% endif %}>Date - Oldest First</option>
+        <option value="created_at_desc" {% if sort=='created_at_desc' %}selected{% endif %}>Date - Newest First</option>
+        <option value="created_at_asc" {% if sort=='created_at_asc' %}selected{% endif %}>Date - Oldest First</option>
     </select>
 </form>
         <table class="admin-table">
@@ -92,11 +92,11 @@
         {% endif %}
     </a>
 
-    <!-- {% if session.get('role') == 'admin' %} -->
-<a href="/delete/{{ booking[0] }}">
-    <button>Delete</button>
+    <a href="#"
+   class="btn-delete"
+   onclick="openModal('{{ booking[0] }}')">
+   Delete
 </a>
-<!-- {% endif %} -->
 </td>
     <td>{{ booking[5] }}</td>
     </tr>
