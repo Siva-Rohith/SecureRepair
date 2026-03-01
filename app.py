@@ -2,6 +2,7 @@ import os
 from flask import Flask, render_template, request, redirect, session
 from datetime import datetime
 import sqlite3
+from flask import jsonify
 import secrets
 import csv
 from flask import Response
@@ -84,6 +85,7 @@ def admin():
 
     page = request.args.get('page', 1, type=int)
     sort = request.args.get('sort', 'id_desc')
+    status_filter = request.args.get('status', 'all')
 
     per_page = 5
     offset = (page - 1) * per_page
@@ -101,13 +103,24 @@ def admin():
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
 
-    cursor.execute("SELECT COUNT(*) FROM bookings")
+    # Base query
+    base_query = "FROM bookings"
+    params = []
+
+    if status_filter != 'all':
+        base_query += " WHERE status = ?"
+        params.append(status_filter)
+
+    # Count total records (after filter)
+    cursor.execute(f"SELECT COUNT(*) {base_query}", params)
     total_records = cursor.fetchone()[0]
 
-    query = f"SELECT * FROM bookings ORDER BY {order_by} LIMIT ? OFFSET ?"
-    cursor.execute(query, (per_page, offset))
+    # Fetch paginated records
+    query = f"SELECT * {base_query} ORDER BY {order_by} LIMIT ? OFFSET ?"
+    cursor.execute(query, params + [per_page, offset])
     bookings = cursor.fetchall()
 
+    # Global counts (for dashboard cards)
     cursor.execute("SELECT COUNT(*) FROM bookings WHERE status='Pending'")
     pending = cursor.fetchone()[0]
 
@@ -123,11 +136,12 @@ def admin():
         bookings=bookings,
         pending=pending,
         completed=completed,
+        total=pending + completed,
         page=page,
         total_pages=total_pages,
-        sort=sort
+        sort=sort,  
+        current_status=status_filter
     )
-
 
 
 
@@ -173,25 +187,29 @@ def delete(id):
 
 
 
-@app.route('/toggle/<int:id>')
-def toggle(id):
+@app.route('/toggle/<int:id>', methods=['POST'])
+def toggle_status(id):
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
 
     cursor.execute("SELECT status FROM bookings WHERE id = ?", (id,))
-    current_status = cursor.fetchone()[0]
+    result = cursor.fetchone()
 
-    if current_status == 'Pending':
-        new_status = 'Completed'
-    else:
-        new_status = 'Pending'
+    if not result:
+        conn.close()
+        return jsonify({"success": False})
+
+    current_status = result[0]
+    new_status = 'Completed' if current_status == 'Pending' else 'Pending'
 
     cursor.execute("UPDATE bookings SET status = ? WHERE id = ?", (new_status, id))
     conn.commit()
     conn.close()
 
-    return redirect('/admin')
-
+    return jsonify({
+        "success": True,
+        "new_status": new_status
+    })
 
 
 
