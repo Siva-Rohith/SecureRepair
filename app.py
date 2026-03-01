@@ -26,11 +26,16 @@ def init_db():
 
     # Create bookings table
     cursor.execute("""
+    
     CREATE TABLE IF NOT EXISTS bookings (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
+        mobile TEXT,
+        address TEXT,
         device TEXT NOT NULL,
         issue TEXT NOT NULL,
+        preferred_date TEXT,
+        time_slot TEXT,
         status TEXT DEFAULT 'Pending',
         created_at TEXT
     )
@@ -53,28 +58,36 @@ def home():
 
 
 #BOOKING ROUTE
-
-@app.route('/book', methods=['GET', 'POST'])
+@app.route('/book', methods=['POST'])
 def book():
-    if request.method == 'POST':
-        name = request.form['name']
-        device = request.form['device']
-        issue = request.form['issue']
 
-        conn = sqlite3.connect('database.db')
-        cursor = conn.cursor()
-        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    name = request.form['name']
+    mobile = request.form['mobile']
+    address = request.form['address']
+    device = request.form['device']
+    issue = request.form['issue']
+    date = request.form['date']
+    time_slot = request.form['time_slot']
 
-        cursor.execute(
-            "INSERT INTO bookings (name, device, issue, status, created_at) VALUES (?, ?, ?, ?, ?)",
-            (name, device, issue, 'Pending', now)
-        )
-        conn.commit()
-        conn.close()
+    conn = sqlite3.connect('database.db')
+    cursor = conn.cursor()
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        return f"<h2>Thank you {name}! Your repair request has been saved.</h2>"
+    cursor.execute("""
+        INSERT INTO bookings
+        (name, mobile, address, device, issue, preferred_date, time_slot, status, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (name, mobile, address, device, issue, date, time_slot, 'Pending', now))
 
-    return render_template('book.html')
+    conn.commit()
+    conn.close()
+
+    return jsonify({"success": True})
+
+
+
+
+
 
 
 
@@ -93,10 +106,25 @@ def admin():
     # Sorting logic
     if sort == "id_asc":
         order_by = "id ASC"
+
     elif sort == "created_at_desc":
         order_by = "created_at DESC"
+
     elif sort == "created_at_asc":
         order_by = "created_at ASC"
+
+    elif sort == "preferred_date_desc":
+        order_by = "preferred_date DESC"
+
+    elif sort == "preferred_date_asc":
+        order_by = "preferred_date ASC"
+
+    elif sort == "time_slot_asc":
+        order_by = "time_slot ASC"
+
+    elif sort == "time_slot_desc":
+        order_by = "time_slot DESC"
+
     else:
         order_by = "id DESC"
 
@@ -155,11 +183,12 @@ def export_csv():
     cursor.execute("SELECT * FROM bookings")
     data = cursor.fetchall()
     conn.close()
-
+    
     def generate():
-        yield 'ID,Name,Device,Issue,Status,Date\n'
+        yield 'ID,Name,Device,Issue,Preferred Date,Time Slot,Status,Created At\n'
+
         for row in data:
-            yield f"{row[0]},{row[1]},{row[2]},{row[3]},{row[4]},{row[5]}\n"
+            yield f"{row[0]},{row[1]},{row[2]},{row[3]},{row[4]},{row[5]},{row[6]},{row[7]}\n"
 
     return Response(generate(),
                     mimetype='text/csv',

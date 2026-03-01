@@ -13,7 +13,7 @@
     <ul>
         <li><a href="#">Home</a></li>
         <li><a href="#services">Services</a></li>
-        <li><a href="/book">Book</a></li>
+        <li><a href="javascript:void(0)" onclick="openBooking()">Book Now</a></li>
         <li><a href="/login">Login</a></li>
     </ul>
 </nav>
@@ -21,44 +21,42 @@
 <!-- HERO -->
 <section class="hero">
     <div class="hero-content">
-        <h1>Electronics Repair Made Simple</h1>
+        <h1>Fast & Reliable Device Repair - Made Easy</h1>
         <p>We Pick • We Repair • We Deliver</p>
-        <a href="/book" class="primary-btn">Book Now</a>
+        <p>Doorstep pickup and repair service for laptops & mobiles — fast, affordable, and hassle-free.</p>
+        <a href="javascript:void(0)" class="primary-btn" onclick="openBooking()">Book Now</a>
+        <a href="#services" class="secondary-btn">Explore Services</a>
     </div>
 </section>
 
 <!-- SERVICES -->
 <section class="services" id="services">
     <h2>Our Services</h2>
-
     <div class="cards">
         <div class="card">
+            <i data-lucide="laptop"></i>
             <h3>Laptop Repair</h3>
             <p>Fast repair or replacement with genuine parts and warranty support.</p>
         </div>
-
         <div class="card">
+            <i data-lucide="smartphone"></i>
             <h3>Mobile Repair</h3>
             <p>Professional repair services for smartphones and tablets.</p>
         </div>
     </div>
 </section>
 
-<!-- HOW IT WORKS -->
 <section class="process">
     <h2>How It Works</h2>
-
     <div class="process-steps">
         <div class="step">
             <h3>1. Book Online</h3>
             <p>Schedule your repair in seconds.</p>
         </div>
-
         <div class="step">
             <h3>2. We Pick Up</h3>
             <p>Our team collects your device safely.</p>
         </div>
-
         <div class="step">
             <h3>3. Repair & Deliver</h3>
             <p>Fast repair and doorstep delivery.</p>
@@ -66,21 +64,17 @@
     </div>
 </section>
 
-<!-- WHY US -->
 <section class="why">
     <h2>Why Choose SecureRepair?</h2>
-
     <div class="why-grid">
         <div class="why-card">
             <h3>Fast Service</h3>
             <p>Quick turnaround without compromising quality.</p>
         </div>
-
         <div class="why-card">
             <h3>Affordable Pricing</h3>
             <p>Transparent and student-friendly pricing.</p>
         </div>
-
         <div class="why-card">
             <h3>Trusted Technicians</h3>
             <p>Experienced professionals you can rely on.</p>
@@ -88,10 +82,158 @@
     </div>
 </section>
 
-<!-- FOOTER -->
 <footer class="footer">
     <p>© 2026 SecureRepair. All rights reserved.</p>
 </footer>
+
+<!-- BOOKING MODAL -->
+<div id="bookingModal" class="booking-modal">
+    <div class="booking-card">
+        <span class="close-btn" onclick="closeBooking()">✕</span>
+        <h2>Book a Repair</h2>
+
+        <form method="POST" action="/book">
+
+            <div class="form-group">
+                <input type="text" name="name" required>
+                <label>Your Name</label>
+            </div>
+
+            <div class="form-group">
+                <input type="text" name="mobile" required>
+                <label>Mobile Number</label>
+            </div>
+
+            <div class="form-group">
+                <textarea name="address" required></textarea>
+                <label>Address</label>
+            </div>
+
+            <div class="form-group">
+                <input type="text" name="device" required>
+                <label>Device Model</label>
+            </div>
+
+            <div class="form-group">
+                <textarea name="issue" required></textarea>
+                <label>Describe the Issue</label>
+            </div>
+
+            <div class="form-group no-float">
+                <label class="static-label">Select Date</label>
+                <input type="date" name="date" required>
+            </div>
+
+            <div class="form-group no-float">
+                <label class="static-label">Select Time Slot</label>
+                <select name="time_slot" required>
+                    <option value="">Choose Slot</option>
+                    <option>9:00 AM - 11:00 AM</option>
+                    <option>11:00 AM - 1:00 PM</option>
+                    <option>2:00 PM - 4:00 PM</option>
+                    <option>4:00 PM - 6:00 PM</option>
+                </select>
+            </div>
+
+            <button type="submit" class="book-btn">Submit Request</button>
+        </form>
+    </div>
+</div>
+
+<!-- THANK YOU POPUP -->
+<div id="thankYouPopup" class="thankyou-popup">
+    <div class="thankyou-card">
+       <h3 id="thankYouTitle">Thank You!</h3>
+        <p id="thankYouMessage">Your repair request has been submitted successfully.</p>
+        <button onclick="closeThankYou()">OK</button>
+    </div>
+</div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<script>
+lucide.createIcons();
+
+const sections = document.querySelectorAll("section");
+window.addEventListener("scroll", revealSections);
+window.addEventListener("load", revealSections);
+
+function revealSections() {
+    sections.forEach(section => {
+        const top = section.getBoundingClientRect().top;
+        if (top < window.innerHeight - 100) {
+            section.classList.add("show");
+        }
+    });
+}
+
+function openBooking() {
+    document.getElementById("bookingModal").classList.add("show");
+    document.body.style.overflow = "hidden";
+}
+
+function closeBooking() {
+    document.getElementById("bookingModal").classList.remove("show");
+    document.body.style.overflow = "auto";
+}
+
+window.onclick = function(event) {
+    const modal = document.getElementById("bookingModal");
+    if (event.target === modal) {
+        closeBooking();
+    }
+};
+
+function closeThankYou() {
+    document.getElementById("thankYouPopup").classList.remove("show");
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+
+    const dateInput = document.querySelector('input[name="date"]');
+    const today = new Date().toISOString().split("T")[0];
+    dateInput.setAttribute("min", today);
+
+    const bookingForm = document.querySelector("#bookingModal form");
+
+    bookingForm.addEventListener("submit", function(e) {
+
+        e.preventDefault();
+
+        const formData = new FormData(this);
+
+        fetch("/book", {
+            method: "POST",
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+
+            if (data.success) {
+
+                closeBooking();
+
+                const nameValue = bookingForm.querySelector('input[name="name"]').value;
+
+                document.getElementById("thankYouTitle").innerText =
+                    " Thank You " + nameValue + "!";
+
+                document.getElementById("thankYouMessage").innerText =
+                    "Your repair request has been submitted successfully.";
+
+                const popup = document.getElementById("thankYouPopup");
+                popup.classList.add("show");
+
+                setTimeout(() => {
+                    popup.classList.remove("show");
+                }, 5000);
+
+                bookingForm.reset();
+            }
+        });
+    });
+});
+</script>
 
 </body>
 </html>
