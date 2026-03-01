@@ -68,10 +68,12 @@ body {
 
 .cards {
     display: flex;
-    gap: 30px;
     justify-content: center;
     margin-top: 40px;
+    gap: 40px;
+    flex-wrap: wrap;
 }
+
 
 .card {
     background: #f3f4f6;
