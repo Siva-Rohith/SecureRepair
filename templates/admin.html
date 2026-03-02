@@ -102,81 +102,62 @@
                 </a>
             </div>
 
-            <!-- Table -->
-            <div class="table-card">
-                <table class="admin-table">
-                    <tr>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>Mobile</th>
-                        <th>Address</th>
-                        <th>Device</th>
-                        <th>Issue</th>
-                        <th>Preferred Date</th>
-                        <th>Time Slot</th>
-                        <th>Status</th>
-                        <th>Created</th>
-                        <th>Action</th>
-                    </tr>
-
-                    {% for booking in bookings %}
-                    <tr>
-                        <td>{{ booking[0] }}</td>
-                        <td>{{ booking[1] }}</td>
-                        <td>{{ booking[2] }}</td>
-                        <td>{{ booking[3] }}</td>
-                        <td>{{ booking[4] }}</td>
-                        <td>{{ booking[5] }}</td>
-                        <td>{{ booking[6] }}</td>
-                        <td>{{ booking[7] }}</td>
-
-                        <td>
-                            <span class="badge {% if booking[8]=='Pending' %}badge-pending{% else %}badge-complete{% endif %}">
-                                {{ booking[8] }}
-                            </span>
-                        </td>
-
-                        <td>{{ booking[9] }}</td>
-
-                        <td>
-                            <button type="button"
-                                onclick="openViewModal(
-                                    '{{ booking[0] }}',
-                                    '{{ booking[1] }}',
-                                    '{{ booking[2] }}',
-                                    '{{ booking[3] }}',
-                                    '{{ booking[4] }}',
-                                    '{{ booking[5] }}',
-                                    '{{ booking[6] }}',
-                                    '{{ booking[7] }}',
-                                    '{{ booking[8] }}',
-                                    '{{ booking[9] }}'
-                                )"
-                                class="btn-complete">
-                                View
-                            </button>
-
-                            <button type="button"
-                                onclick="toggleStatus('{{ booking[0] }}', this)"
-                                class="btn-complete">
-                                {% if booking[8] == 'Pending' %}
-                                    Complete
-                                {% else %}
-                                    Mark Pending
-                                {% endif %}
-                            </button>
-
-                            <button type="button"
-                                onclick="openDeleteModal('{{ booking[0] }}')"
-                                class="btn-delete">
-                                Delete
-                            </button>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </table>
+            <div class="chart-card">
+                <canvas id="statusChart"></canvas>
             </div>
 
+            <!-- Table -->
+           <div class="table-card">
+    <table class="admin-table">
+        <tr>
+            <th>SR-ID</th>
+            <th>Name</th>
+            <th>Device</th>
+            <th>Preferred Date</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+
+        {% for booking in bookings %}
+        <tr>
+            <td>{{ booking[0] }}</td>  <!-- SR-ID -->
+            <td>{{ booking[1] }}</td>  <!-- Name -->
+            <td>{{ booking[5] }}</td>  <!-- Device -->
+            <td>{{ booking[7] }}</td>  <!-- Preferred Date -->
+
+            <td>
+                <span class="badge {% if booking[9]=='Pending' %}badge-pending{% else %}badge-complete{% endif %}">
+                    {{ booking[9] }}
+                </span>
+            </td>
+
+            <td class="action-buttons">
+                <button type="button"
+                    class="btn-view view-btn"
+                    data-booking='{{ booking|tojson }}'>
+                    View
+                </button>
+
+                <button type="button"
+                    onclick="toggleStatus('{{ booking[0] }}', this)"
+                    class="btn-toggle">
+                    {% if booking[9] == 'Pending' %}
+                        Complete
+                    {% else %}
+                        Mark Pending
+                    {% endif %}
+                </button>
+
+                <button type="button"
+                    onclick="openDeleteModal('{{ booking[0] }}')"
+                    class="btn-delete">
+                    Delete
+                </button>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
            
 
             <!-- paghination -->
@@ -206,9 +187,7 @@
     {% endif %}
 
 </div>
- <div class="chart-card">
-                <canvas id="statusChart"></canvas>
-            </div>
+ 
         </section>
     </div>
 </div>
@@ -221,6 +200,7 @@
 <div id="deleteModal" class="modal">
     <div class="modal-content">
         <h3>Confirm Delete</h3>
+        <p>Are you sure you want to delete this booking?</p>
         <button onclick="confirmDelete()" class="btn-delete">Yes Delete</button>
         <button onclick="closeModal()" class="btn-complete">Cancel</button>
     </div>
@@ -232,6 +212,7 @@
         <h3>Booking Details</h3>
         <p><strong>ID:</strong> <span id="v_id"></span></p>
         <p><strong>Name:</strong> <span id="v_name"></span></p>
+        <p><strong>Email:</strong> <span id="v_email"></span></p>
         <p><strong>Mobile:</strong> <span id="v_mobile"></span></p>
         <p><strong>Address:</strong> <span id="v_address"></span></p>
         <p><strong>Device:</strong> <span id="v_device"></span></p>
@@ -260,9 +241,10 @@ function confirmDelete() {
     window.location.href = "/delete/" + deleteId;
 }
 
-function openViewModal(id, name, mobile, address, device, issue, pref_date, time_slot, status, created) {
+function openViewModal(id, name, email, mobile, address, device, issue, pref_date, time_slot, status, created) {
     document.getElementById("v_id").innerText = id;
     document.getElementById("v_name").innerText = name;
+    document.getElementById("v_email").innerText = email;
     document.getElementById("v_mobile").innerText = mobile;
     document.getElementById("v_address").innerText = address;
     document.getElementById("v_device").innerText = device;
@@ -312,11 +294,13 @@ let statusChart = new Chart(ctx, {
             borderWidth: 1
         }]
     },
-    options: {
-        scales: {
-            y: { beginAtZero: true }
-        }
+   options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+        y: { beginAtZero: true }
     }
+}
 });
 
 function toggleStatus(id, buttonElement) {
@@ -378,7 +362,30 @@ toggleBtn.addEventListener("click", function() {
     sidebar.classList.toggle("closed");
     mainContent.classList.toggle("full");
 });
+
+document.querySelectorAll(".view-btn").forEach(button => {
+    button.addEventListener("click", function() {
+
+        const booking = JSON.parse(this.dataset.booking);
+
+        openViewModal(
+            booking[0],
+            booking[1],
+            booking[2],
+            booking[3],
+            booking[4],
+            booking[5],
+            booking[6],
+            booking[7],
+            booking[8],
+            booking[9],
+            booking[10]
+        );
+    });
+});
 </script>
+
+
 
 </body>
 </html>

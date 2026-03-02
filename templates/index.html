@@ -96,11 +96,22 @@
 
             <div class="form-group">
                 <input type="text" name="name" required>
-                <label>Your Name</label>
+                <label>Name</label>
             </div>
-
             <div class="form-group">
-                <input type="text" name="mobile" required>
+                <input type="text"
+                    name="email"
+                    pattern="[^@]+@[^@]+\.[a-zA-Z]{2,}"
+                    required>
+                <label>Email Address</label>
+            </div>
+            <div class="form-group">
+                <input type="text"
+                    name="mobile"
+                    pattern="[0-9]{10}"
+                    maxlength="10"
+                    inputmode="numeric"
+                    required>
                 <label>Mobile Number</label>
             </div>
 
@@ -234,6 +245,31 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 });
 </script>
+<script>
+document.querySelector("input[name='mobile']")
+.addEventListener("input", function(e) {
+    this.value = this.value.replace(/\D/g, '');
+});
+</script>
 
+<script>
+document.querySelectorAll(".form-group input, .form-group textarea")
+.forEach(function(input) {
+
+    // When typing
+    input.addEventListener("input", function() {
+        if (this.value.trim() !== "") {
+            this.classList.add("filled");
+        } else {
+            this.classList.remove("filled");
+        }
+    });
+
+    // On page load (if autofilled)
+    if (input.value.trim() !== "") {
+        input.classList.add("filled");
+    }
+});
+</script>
 </body>
 </html>

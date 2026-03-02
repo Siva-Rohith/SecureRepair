@@ -26,10 +26,10 @@ def init_db():
 
     # Create bookings table
     cursor.execute("""
-    
-    CREATE TABLE IF NOT EXISTS bookings (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+     CREATE TABLE IF NOT EXISTS bookings (
+        id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
+        email TEXT NOT NULL,
         mobile TEXT,
         address TEXT,
         device TEXT NOT NULL,
@@ -62,6 +62,7 @@ def home():
 def book():
 
     name = request.form['name']
+    email = request.form['email']
     mobile = request.form['mobile']
     address = request.form['address']
     device = request.form['device']
@@ -71,18 +72,32 @@ def book():
 
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
+
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    # 🔥 Get last ID
+    cursor.execute("SELECT id FROM bookings ORDER BY created_at DESC LIMIT 1")
+    last = cursor.fetchone()
+
+    if last:
+        last_number = int(last[0].split("-")[1])
+        new_id = f"SR-{last_number + 1}"
+    else:
+        new_id = "SR-1000"
 
     cursor.execute("""
         INSERT INTO bookings
-        (name, mobile, address, device, issue, preferred_date, time_slot, status, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (name, mobile, address, device, issue, date, time_slot, 'Pending', now))
+        (id, name, email, mobile, address, device, issue, preferred_date, time_slot, status, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (new_id, name, email, mobile, address, device, issue, date, time_slot, 'Pending', now))
 
     conn.commit()
     conn.close()
 
     return jsonify({"success": True})
+
+
+
 
 
 
@@ -185,10 +200,10 @@ def export_csv():
     conn.close()
     
     def generate():
-        yield 'ID,Name,Device,Issue,Preferred Date,Time Slot,Status,Created At\n'
+        yield 'SR-ID,Name,Email,Mobile,Address,Device,Issue,Preferred Date,Time Slot,Status,Created At\n'
 
         for row in data:
-            yield f"{row[0]},{row[1]},{row[2]},{row[3]},{row[4]},{row[5]},{row[6]},{row[7]}\n"
+            yield f"{row[0]},{row[1]},{row[2]},{row[3]},{row[4]},{row[5]},{row[6]},{row[7]},{row[8]},{row[9]},{row[10]}\n"
 
     return Response(generate(),
                     mimetype='text/csv',
@@ -200,7 +215,7 @@ def export_csv():
 
 
 
-@app.route('/delete/<int:id>')
+@app.route('/delete/<id>')
 def delete(id):
     if not session.get('admin'):
         return redirect('/login')
@@ -216,7 +231,7 @@ def delete(id):
 
 
 
-@app.route('/toggle/<int:id>', methods=['POST'])
+@app.route('/toggle/<id>', methods=['POST'])
 def toggle_status(id):
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()

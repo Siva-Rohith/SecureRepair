@@ -59,14 +59,30 @@ body {
 }
 
 /* ===== TOPBAR ===== */
-.topbar {
+/* .topbar {
     background: white;
     padding: 20px 40px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-}
+    
+
+} */
+ .topbar {
+    background: white;
+    padding: 20px 40px;
+    display: flex;
+    justify-content: space-between;
+    /* align-items: center; */
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+
+    position: fixed;
+    top: 0;
+    left: 279px; /* same as sidebar width */
+    right: 0;
+    z-index: 1000;
+} 
 
 .topbar-title {
     font-weight: 600;
@@ -87,8 +103,13 @@ body {
 }
 
 /* ===== CONTENT WRAPPER ===== */
+/* .content-wrapper {
+    padding: 40px;
+} */
+
 .content-wrapper {
     padding: 40px;
+    margin-top: 80px; /* pushes content below fixed topbar */
 }
 
 /* ===== DASHBOARD CARDS ===== */
@@ -162,12 +183,24 @@ body {
 }
 
 /* ===== CHART CARD ===== */
-.chart-card {
+/* .chart-card {
     background: white;
     padding: 25px;
     border-radius: 16px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.05);
     margin-bottom: 30px;
+} */
+.chart-card {
+    background: white;
+    padding: 20px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+
+    max-width: 600px;   /* limit width */
+    margin: 0 auto 30px auto; /* center it */
+}
+.chart-card canvas {
+    height: 250px !important;
 }
 
 /* ===== TABLE CARD ===== */
@@ -205,13 +238,24 @@ body {
     background: #f9fafb;
 }
 
+.admin-table tr:hover {
+    background: #f1f5f9;
+    transition: 0.2s ease;
+}
 /* ===== BADGES ===== */
-.badge {
+/* .badge {
     padding: 6px 12px;
     border-radius: 50px;
     font-size: 12px;
     font-weight: 500;
     color: white;
+} */
+.badge {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
 }
 
 .badge-pending {
@@ -237,7 +281,7 @@ body {
     background: #2563eb;
     color: white;
 }
-
+ 
 .btn-complete:hover {
     background: #1e40af;
 }
@@ -249,6 +293,29 @@ body {
 
 .btn-delete:hover {
     background: #dc2626;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-view {
+    background: #3b82f6;
+    color: white;
+}
+
+.btn-view:hover {
+    background: #2563eb;
+}
+
+.btn-toggle {
+    background: #10b981;
+    color: white;
+}
+
+.btn-toggle:hover {
+    background: #059669;
 }
 
 /* ===== PAGINATION ===== */
@@ -331,6 +398,9 @@ body {
 .main-content.full {
     margin-left: 0;
 }
+.main-content.full .topbar {
+    left: 0;
+}
 
 
 .menu-btn {
@@ -341,4 +411,5 @@ body {
     border-radius: 6px;
     cursor: pointer;
     font-size: 16px;
+    lef
 }

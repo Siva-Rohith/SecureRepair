@@ -346,9 +346,9 @@ section.show {
 }
 
 .form-group input:focus + label,
-.form-group input:valid + label,
 .form-group textarea:focus + label,
-.form-group textarea:valid + label {
+.form-group input.filled + label,
+.form-group textarea.filled + label {
     top: -10px;
     font-size: 11px;
 }
