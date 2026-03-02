@@ -121,13 +121,13 @@
         {% for booking in bookings %}
         <tr>
             <td>{{ booking[0] }}</td>  <!-- SR-ID -->
-            <td>{{ booking[1] }}</td>  <!-- Name -->
-            <td>{{ booking[5] }}</td>  <!-- Device -->
-            <td>{{ booking[7] }}</td>  <!-- Preferred Date -->
+            <td>{{ booking[2] }}</td>  <!-- Name -->
+            <td>{{ booking[6] }}</td>  <!-- Device -->
+            <td>{{ booking[8] }}</td>  <!-- Preferred Date -->
 
             <td>
-                <span class="badge {% if booking[9]=='Pending' %}badge-pending{% else %}badge-complete{% endif %}">
-                    {{ booking[9] }}
+                <span class="badge {% if booking[10]=='Pending' %}badge-pending{% else %}badge-complete{% endif %}">
+                    {{ booking[10] }}
                 </span>
             </td>
 
@@ -370,7 +370,6 @@ document.querySelectorAll(".view-btn").forEach(button => {
 
         openViewModal(
             booking[0],
-            booking[1],
             booking[2],
             booking[3],
             booking[4],
@@ -379,7 +378,8 @@ document.querySelectorAll(".view-btn").forEach(button => {
             booking[7],
             booking[8],
             booking[9],
-            booking[10]
+            booking[10],
+            booking[11]
         );
     });
 });

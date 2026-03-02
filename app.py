@@ -23,11 +23,21 @@ from werkzeug.security import generate_password_hash
 def init_db():
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
-
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            mobile TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            created_at TEXT
+        )
+        """)
     # Create bookings table
     cursor.execute("""
      CREATE TABLE IF NOT EXISTS bookings (
         id TEXT PRIMARY KEY,
+        user_id INTEGER,
         name TEXT NOT NULL,
         email TEXT NOT NULL,
         mobile TEXT,
@@ -85,11 +95,13 @@ def book():
     else:
         new_id = "SR-1000"
 
+    user_id = session.get("user_id")  # may be None
+
     cursor.execute("""
         INSERT INTO bookings
-        (id, name, email, mobile, address, device, issue, preferred_date, time_slot, status, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (new_id, name, email, mobile, address, device, issue, date, time_slot, 'Pending', now))
+        (id, user_id, name, email, mobile, address, device, issue, preferred_date, time_slot, status, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (new_id, user_id, name, email, mobile, address, device, issue, date, time_slot, 'Pending', now))
 
     conn.commit()
     conn.close()
@@ -98,9 +110,145 @@ def book():
 
 
 
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+
+    if session.get('user_id'):
+        return redirect('/')
+
+    if request.method == 'POST':
+
+        name = request.form['name']
+        email = request.form['email']
+        mobile = request.form['mobile']
+        password = request.form['password']
+
+        password_hash = generate_password_hash(password)
+
+        conn = sqlite3.connect('database.db')
+        cursor = conn.cursor()
+
+        # Check if user already exists
+        cursor.execute("""
+            SELECT id FROM users
+            WHERE email = ? OR mobile = ?
+        """, (email, mobile))
+
+        existing = cursor.fetchone()
+
+        if existing:
+            conn.close()
+            return "User already exists with this Email or Mobile"
+
+        # Insert new user
+        cursor.execute("""
+            INSERT INTO users (name, email, mobile, password_hash, created_at)
+            VALUES (?, ?, ?, ?, ?)
+        """, (name, email, mobile, password_hash, datetime.now()))
+
+        user_id = cursor.lastrowid
+
+        
+        cursor.execute("""
+            UPDATE bookings
+            SET user_id = ?
+            WHERE (email = ? OR mobile = ?)
+            AND user_id IS NULL
+        """, (user_id, email, mobile))
+
+        conn.commit()
+        conn.close()
+
+       
+        session['user_id'] = user_id
+        session['user_name'] = name
+        session['user_email'] = email
+        session['user_mobile'] = mobile
+
+        return redirect('/')
+
+    return render_template('signup.html')
 
 
 
+
+
+
+
+@app.route('/user-login', methods=['GET', 'POST'])
+def user_login():
+
+    if session.get('user_id'):
+        return redirect('/')
+
+    if request.method == 'POST':
+
+        identifier = request.form['identifier']
+        password = request.form['password']
+
+        conn = sqlite3.connect('database.db')
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT id, name, email, mobile, password_hash
+            FROM users
+            WHERE email = ? OR mobile = ?
+        """, (identifier, identifier))
+
+        user = cursor.fetchone()
+        conn.close()
+
+        if user:
+            user_id = user[0]
+            user_name = user[1]
+            user_email = user[2]
+            user_mobile = user[3]
+            password_hash = user[4]
+
+            if check_password_hash(password_hash, password):
+                session['user_id'] = user_id
+                session['user_name'] = user_name
+                session['user_email'] = user_email
+                session['user_mobile'] = user_mobile
+                return redirect('/')
+
+        return "Invalid Credentials"
+
+    return render_template('user_login.html')
+
+
+
+
+
+
+@app.route('/user-dashboard')
+def user_dashboard():
+    if not session.get('user_id'):
+        return redirect('/user-login')
+
+    conn = sqlite3.connect('database.db')
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT * FROM bookings
+        WHERE user_id = ?
+        ORDER BY created_at DESC
+    """, (session['user_id'],))
+
+    bookings = cursor.fetchall()
+    conn.close()
+
+    return render_template('user_dashboard.html', bookings=bookings)
+
+
+
+
+
+
+@app.route('/logout-user')
+def logout_user():
+    session.clear()   
+    return redirect('/')
 
 
 

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Bookings - SecureRepair</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+
+<div class="layout">
+
+    <div class="main-content" style="margin-left:0;">
+
+        <nav class="topbar">
+            <div class="topbar-title">
+                Welcome, {{ session['user_name'] }}
+            </div>
+            <a href="/logout-user" class="logout-btn">Logout</a>
+        </nav>
+
+        <section class="content-wrapper">
+
+            <h2>My Bookings</h2>
+
+            <div class="table-card">
+                <table class="admin-table">
+                    <tr>
+                        <th>SR-ID</th>
+                        <th>Device</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                    </tr>
+
+                    {% for booking in bookings %}
+                    <tr>
+                        <td>{{ booking[0] }}</td>
+                        <td>{{ booking[6] }}</td>
+                        <td>{{ booking[8] }}</td>
+                        <td>
+                            <span class="badge {% if booking[9]=='Pending' %}badge-pending{% else %}badge-complete{% endif %}">
+                                {{ booking[9] }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+
+        </section>
+
+    </div>
+
+</div>
+
+</body>
+</html>
