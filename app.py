@@ -1,4 +1,5 @@
 import os
+import re
 from flask import Flask, render_template, request, redirect, session
 from datetime import datetime
 import sqlite3
@@ -19,6 +20,14 @@ app.permanent_session_lifetime = timedelta(minutes=10)
 
 # Create database table
 from werkzeug.security import generate_password_hash
+from werkzeug.utils import secure_filename
+
+UPLOAD_FOLDER = 'static/uploads'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
 
 def init_db():
     conn = sqlite3.connect('database.db')
@@ -30,6 +39,7 @@ def init_db():
             email TEXT UNIQUE NOT NULL,
             mobile TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL,
+            profile_image TEXT DEFAULT 'default.png',
             created_at TEXT
         )
         """)
@@ -71,9 +81,9 @@ def home():
 @app.route('/book', methods=['POST'])
 def book():
 
-    name = request.form['name']
-    email = request.form['email']
-    mobile = request.form['mobile']
+    name = request.form['name'].strip()
+    email = request.form['email'].strip().lower()
+    mobile = request.form['mobile'].strip()
     address = request.form['address']
     device = request.form['device']
     issue = request.form['issue']
@@ -85,7 +95,6 @@ def book():
 
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # 🔥 Get last ID
     cursor.execute("SELECT id FROM bookings ORDER BY created_at DESC LIMIT 1")
     last = cursor.fetchone()
 
@@ -95,7 +104,14 @@ def book():
     else:
         new_id = "SR-1000"
 
-    user_id = session.get("user_id")  # may be None
+    user_id = session.get("user_id")
+
+    # If not logged in, try linking by email
+    if not user_id:
+        cursor.execute("SELECT id FROM users WHERE LOWER(email) = ?", (email,))
+        existing_user = cursor.fetchone()
+        if existing_user:
+            user_id = existing_user[0]
 
     cursor.execute("""
         INSERT INTO bookings
@@ -122,7 +138,19 @@ def signup():
         email = request.form['email']
         mobile = request.form['mobile']
         password = request.form['password']
+        
 
+        email = email.strip().lower()
+        mobile = mobile.strip()
+
+        # Email validation
+        email_pattern = r'^[\w\.-]+@[\w\.-]+\.\w{2,}$'
+        if not re.match(email_pattern, email):
+            return "Invalid Email Format"
+
+        # Mobile validation (10 digits only)
+        if not mobile.isdigit() or len(mobile) != 10:
+            return "Mobile must be exactly 10 digits"
         password_hash = generate_password_hash(password)
 
         conn = sqlite3.connect('database.db')
@@ -152,9 +180,9 @@ def signup():
         cursor.execute("""
             UPDATE bookings
             SET user_id = ?
-            WHERE (email = ? OR mobile = ?)
+            WHERE email = ?
             AND user_id IS NULL
-        """, (user_id, email, mobile))
+        """, (user_id, email))
 
         conn.commit()
         conn.close()
@@ -190,7 +218,7 @@ def user_login():
         cursor = conn.cursor()
 
         cursor.execute("""
-            SELECT id, name, email, mobile, password_hash
+            SELECT id, name, email, mobile, password_hash, profile_image
             FROM users
             WHERE email = ? OR mobile = ?
         """, (identifier, identifier))
@@ -204,7 +232,7 @@ def user_login():
             user_email = user[2]
             user_mobile = user[3]
             password_hash = user[4]
-
+            session['profile_image'] = user[5]
             if check_password_hash(password_hash, password):
                 session['user_id'] = user_id
                 session['user_name'] = user_name
@@ -227,6 +255,7 @@ def user_dashboard():
         return redirect('/user-login')
 
     conn = sqlite3.connect('database.db')
+    conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -235,10 +264,79 @@ def user_dashboard():
         ORDER BY created_at DESC
     """, (session['user_id'],))
 
-    bookings = cursor.fetchall()
+    rows = cursor.fetchall()
+    bookings = [dict(row) for row in rows]
+    conn.close()
+    print("Bookings fetched:", bookings)
+    print("Logged user:", session.get('user_id'))
+    return render_template('user_dashboard.html', bookings=bookings)
+
+
+
+
+@app.route('/update-profile', methods=['POST'])
+def update_profile():
+
+    if not session.get('user_id'):
+        return redirect('/user-login')
+
+    name = request.form['name'].strip()
+    email = request.form['email'].strip().lower()
+    mobile = request.form['mobile'].strip()
+
+    conn = sqlite3.connect('database.db')
+    cursor = conn.cursor()
+
+    # Check duplicate email/mobile
+    cursor.execute("""
+        SELECT id FROM users
+        WHERE (email = ? OR mobile = ?)
+        AND id != ?
+    """, (email, mobile, session['user_id']))
+
+    if cursor.fetchone():
+        conn.close()
+        return "Email or Mobile already used"
+
+    # Update basic fields
+    cursor.execute("""
+        UPDATE users
+        SET name = ?, email = ?, mobile = ?
+        WHERE id = ?
+    """, (name, email, mobile, session['user_id']))
+
+    # Handle image upload
+    if 'profile_image' in request.files:
+        file = request.files['profile_image']
+        if file and file.filename != "":
+            from werkzeug.utils import secure_filename
+            import os
+
+            filename = secure_filename(file.filename)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(filepath)
+
+            cursor.execute("""
+                UPDATE users
+                SET profile_image = ?
+                WHERE id = ?
+            """, (filename, session['user_id']))
+
+            session['profile_image'] = filename
+
+    conn.commit()
     conn.close()
 
-    return render_template('user_dashboard.html', bookings=bookings)
+    # Update session
+    session['user_name'] = name
+    session['user_email'] = email
+    session['user_mobile'] = mobile
+
+    return redirect('/user-dashboard')
+
+
+
+
 
 
 
@@ -351,7 +449,7 @@ def export_csv():
         yield 'SR-ID,Name,Email,Mobile,Address,Device,Issue,Preferred Date,Time Slot,Status,Created At\n'
 
         for row in data:
-            yield f"{row[0]},{row[1]},{row[2]},{row[3]},{row[4]},{row[5]},{row[6]},{row[7]},{row[8]},{row[9]},{row[10]}\n"
+           yield f"{row[0]},{row[2]},{row[3]},{row[4]},{row[5]},{row[6]},{row[7]},{row[8]},{row[9]},{row[10]},{row[11]}\n"
 
     return Response(generate(),
                     mimetype='text/csv',
@@ -427,6 +525,8 @@ def login():
             return "Invalid Credentials"
 
     return render_template('login.html')
+
+
 
 
 

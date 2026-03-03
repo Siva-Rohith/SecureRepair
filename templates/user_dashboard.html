@@ -2,7 +2,8 @@
 <html>
 <head>
     <title>My Bookings - SecureRepair</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}"> -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user.css') }}">
 </head>
 <body>
 
@@ -19,30 +20,126 @@
 
         <section class="content-wrapper">
 
-            <h2>My Bookings</h2>
+           <h2>My Profile</h2>
 
-            <div class="table-card">
+            <!-- <div class="table-card">
                 <table class="admin-table">
                     <tr>
                         <th>SR-ID</th>
                         <th>Device</th>
-                        <th>Date</th>
+                        <th>Issue</th>
+                        <th>Preferred Date</th>
+                        <th>Booked Date</th>
                         <th>Status</th>
+                        <th>Action</th>
                     </tr>
 
                     {% for booking in bookings %}
-                    <tr>
-                        <td>{{ booking[0] }}</td>
-                        <td>{{ booking[6] }}</td>
-                        <td>{{ booking[8] }}</td>
-                        <td>
-                            <span class="badge {% if booking[9]=='Pending' %}badge-pending{% else %}badge-complete{% endif %}">
-                                {{ booking[9] }}
-                            </span>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </table>
+                        <tr> -->
+                            <!-- <td>{{ booking.id }}</td>   SR-ID -->
+                            <!-- <td>{{ booking.device }}</td>   Device -->
+                            <!-- <td>{{ booking.issue }}</td>   Issue -->
+                            <!-- <td>{{ booking.preferred_date }}</td>   Preferred Date -->
+                            <!-- <td>{{ booking.created_at.split(' ')[0] }}</td>  Booked Date -->
+
+                            <!-- <td>
+                                <span class="badge {% if booking.status=='Pending' %}badge-pending{% else %}badge-complete{% endif %}">
+                                    {{ booking.status }}
+                                </span>
+                            </td>
+
+                            <td>
+                                <button type="button"
+                                    class="btn-view view-btn"
+                                    data-booking='{{ booking|tojson }}'>
+                                    View
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                </table> -->
+<div class="profile-layout">
+
+    <!-- Profile Sidebar -->
+    <div class="profile-card">
+        <div class="profile-image">
+            <img src="{{ url_for('static', filename='uploads/' + session.get('profile_image', 'default.png')) }}">
+        </div>
+
+        <h3>{{ session['user_name'] }}</h3>
+        <p>{{ session['user_email'] }}</p>
+        <p>{{ session['user_mobile'] }}</p>
+
+        <button class="edit-profile-btn">Edit Profile</button>
+    </div>
+    <div id="editProfileModal" class="modal">
+  <div class="modal-content">
+    <h3>Edit Profile</h3>
+
+    <form method="POST" action="/update-profile" enctype="multipart/form-data">
+        <input type="text" name="name" value="{{ session['user_name'] }}" required>
+        <input type="email" name="email" value="{{ session['user_email'] }}" required>
+        <input type="text" name="mobile" value="{{ session['user_mobile'] }}" required>
+
+        <input type="file" name="profile_image">
+
+        <button type="submit">Save Changes</button>
+    </form>
+
+    <button onclick="closeEditModal()">Cancel</button>
+  </div>
+</div>
+    <!-- Bookings Section -->
+    <div class="bookings-section">
+
+        <h3>My Bookings</h3>
+
+        {% for booking in bookings %}
+        <div class="booking-card">
+
+            <div class="booking-header">
+                <span class="sr-id">{{ booking.id }}</span>
+                <span class="status {% if booking.status=='Pending' %}pending{% else %}completed{% endif %}">
+                    {{ booking.status }}
+                </span>
+            </div>
+
+            <div class="booking-body">
+                <p><strong>Device:</strong> {{ booking.device }}</p>
+                <p><strong>Issue:</strong> {{ booking.issue }}</p>
+                <p><strong>Preferred Date:</strong> {{ booking.preferred_date }}</p>
+                <p><strong>Booked Date:</strong> {{ booking.created_at[:10] }}</p>
+            </div>
+
+            <div class="booking-footer">
+                <button class="btn-view view-btn"
+                    data-booking='{{ booking|tojson }}'>
+                    View Details
+                </button>
+            </div>
+
+        </div>
+        {% endfor %}
+
+    </div>
+
+</div>
+                <div id="userViewModal" class="modal">
+    <div class="modal-content">
+        <h3>Booking Details</h3>
+
+        <p><strong>SR-ID:</strong> <span id="u_id"></span></p>
+        <p><strong>Device:</strong> <span id="u_device"></span></p>
+        <p><strong>Issue:</strong> <span id="u_issue"></span></p>
+        <p><strong>Address:</strong> <span id="u_address"></span></p>
+        <p><strong>Preferred Date:</strong> <span id="u_pref"></span></p>
+        <p><strong>Time Slot:</strong> <span id="u_time"></span></p>
+        <p><strong>Status:</strong> <span id="u_status"></span></p>
+        <p><strong>Booked Date:</strong> <span id="u_created"></span></p>
+
+        <button onclick="closeUserModal()" class="btn-complete">Close</button>
+    </div>
+</div>
             </div>
 
         </section>
@@ -50,6 +147,44 @@
     </div>
 
 </div>
+
+
+<script>
+document.querySelectorAll(".view-btn").forEach(button => {
+    button.addEventListener("click", function() {
+
+        const booking = JSON.parse(this.dataset.booking);
+
+        document.getElementById("u_id").innerText = booking.id;
+        document.getElementById("u_device").innerText = booking.device;
+        document.getElementById("u_issue").innerText = booking.issue;
+        document.getElementById("u_address").innerText = booking.address;
+        document.getElementById("u_pref").innerText = booking.preferred_date;
+        document.getElementById("u_time").innerText = booking.time_slot;
+        document.getElementById("u_status").innerText = booking.status;
+        document.getElementById("u_created").innerText = booking.created_at.split(' ')[0];
+
+        document.getElementById("userViewModal").classList.add("show");
+    });
+});
+
+function closeUserModal() {
+    document.getElementById("userViewModal").classList.remove("show");
+}
+
+
+
+document.querySelector(".edit-profile-btn").addEventListener("click", function() {
+    document.getElementById("editProfileModal").classList.add("show");
+});
+
+function closeEditModal() {
+    document.getElementById("editProfileModal").classList.remove("show");
+}
+
+
+
+</script>
 
 </body>
 </html>

@@ -15,7 +15,7 @@
         <li><a href="#services">Services</a></li>
         <li><a href="javascript:void(0)" onclick="openBooking()">Book Now</a></li>
        {% if session.get('user_id') %}
-            <li><a href="/user-dashboard">My Dashboard</a></li>
+            <li><a href="/user-dashboard">Profile</a></li>
             <li><a href="/logout-user">Logout</a></li>
         {% else %}
             <li><a href="/user-login">Login</a></li>
@@ -282,5 +282,56 @@ document.querySelectorAll(".form-group input, .form-group textarea")
     }
 });
 </script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+
+    const dateInput = document.getElementById("bookingDate");
+    const timeSelect = document.getElementById("timeSlot");
+
+    const slotMap = {
+        "9:00 AM - 11:00 AM": 11,
+        "11:00 AM - 1:00 PM": 13,
+        "2:00 PM - 4:00 PM": 16,
+        "4:00 PM - 6:00 PM": 18
+    };
+
+    function updateSlots() {
+
+        const selectedDate = dateInput.value;
+        if (!selectedDate) return;
+
+        const today = new Date();
+        const selected = new Date(selectedDate);
+
+        const isToday =
+            selected.getFullYear() === today.getFullYear() &&
+            selected.getMonth() === today.getMonth() &&
+            selected.getDate() === today.getDate();
+
+        Array.from(timeSelect.options).forEach(option => {
+
+            if (!slotMap[option.value]) return;
+
+            if (isToday) {
+                const currentHour = today.getHours();
+                const slotEndHour = slotMap[option.value];
+
+                if (currentHour >= slotEndHour) {
+                    option.disabled = true;
+                } else {
+                    option.disabled = false;
+                }
+            } else {
+                option.disabled = false;
+            }
+        });
+    }
+
+    dateInput.addEventListener("change", updateSlots);
+});
+</script>
+
+
 </body>
 </html>

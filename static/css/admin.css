@@ -412,3 +412,94 @@ body {
     cursor: pointer;
     font-size: 16px;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* For user dashboard */
+
+.profile-layout {
+    display: flex;
+    gap: 40px;
+}
+
+.profile-card {
+    width: 280px;
+    background: white;
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.05);
+    text-align: center;
+}
+
+.profile-image img {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 15px;
+}
+
+.edit-profile-btn {
+    margin-top: 15px;
+    padding: 8px 15px;
+    border-radius: 8px;
+    border: none;
+    background: #3b82f6;
+    color: white;
+    cursor: pointer;
+}
+
+.bookings-section {
+    flex: 1;
+}
+
+.booking-card {
+    background: white;
+    padding: 20px;
+    border-radius: 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+}
+
+.booking-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.status.pending {
+    background: orange;
+    padding: 5px 12px;
+    border-radius: 20px;
+    color: white;
+}
+
+.status.completed {
+    background: green;
+    padding: 5px 12px;
+    border-radius: 20px;
+    color: white;
+}
