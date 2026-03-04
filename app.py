@@ -368,7 +368,7 @@ def update_profile():
 
     # Handle image upload
     file = request.files.get('profile_image')
-
+#Checking
     if file and file.filename != "":
 
         if allowed_file(file.filename):
