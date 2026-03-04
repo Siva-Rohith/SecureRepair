@@ -101,7 +101,7 @@ src="{{ url_for('static', filename='uploads/' + (session.get('profile_image') or
         Change Photo
     </label>
 
-    <input type="file" name="profile_image" id="imageUpload" hidden>
+    <input type="file" name="profile_image" id="imageUpload" accept=".png,.jpg,.jpeg" hidden>
 
     </div>
 
@@ -507,21 +507,30 @@ document.addEventListener("DOMContentLoaded", function(){
     // IMAGE PREVIEW FOR EDIT PROFILE
     const imageUpload = document.getElementById("imageUpload");
     const preview = document.getElementById("profileImage");
-
     if(imageUpload){
         imageUpload.addEventListener("change", function(){
 
             const file = this.files[0];
+            if(!file) return;
 
-            if(file){
-                const reader = new FileReader();
+            const allowedExtensions = ["png","jpg","jpeg"];
+            const extension = file.name.split(".").pop().toLowerCase();
 
-                reader.onload = function(e){
-                    preview.src = e.target.result;
-                };
-
-                reader.readAsDataURL(file);
+            // VALIDATION
+            if(!allowedExtensions.includes(extension)){
+                showFileError("Invalid file type. Please upload PNG, JPG or JPEG.");
+                this.value = "";
+                return;
             }
+
+            // PREVIEW
+            const reader = new FileReader();
+
+            reader.onload = function(e){
+                preview.src = e.target.result;
+            };
+
+            reader.readAsDataURL(file);
 
         });
     }
@@ -551,24 +560,7 @@ function closeImagePopup(){
     document.getElementById("imagePopup").style.display = "none";
 }
 
-document.getElementById("imageUpload").addEventListener("change", function(){
 
-    const file = this.files[0];
-
-    if(!file) return;
-
-    const allowed = ["image/png","image/jpeg","image/jpg"];
-
-    if(!allowed.includes(file.type)){
-
-        alert("Invalid file type. Please upload PNG, JPG or JPEG.");
-
-        this.value = "";
-        return;
-
-    }
-
-});
 
 
 
@@ -610,6 +602,21 @@ searchInput.addEventListener("keypress", function(e){
 });
 
 
+
+function showFileError(message){
+    document.getElementById("fileErrorText").innerText = message;
+    document.getElementById("fileErrorModal").classList.add("show");
+}
+
+function closeFileError(){
+    document.getElementById("fileErrorModal").classList.remove("show");
+}
+
+
+
+
+    
+
 </script>
 
 
@@ -621,6 +628,17 @@ searchInput.addEventListener("keypress", function(e){
     <img id="popupImage">
 
 </div>
-
+<div id="fileErrorModal" class="time-warning-modal">
+    <div class="time-warning-box">
+        <p id="fileErrorText"></p>
+        <button onclick="closeFileError()">OK</button>
+    </div>
+</div>
+{% if session.get('upload_error') %}
+<script>
+showFileError("{{ session.get('upload_error') }}");
+</script>
+{% set _ = session.pop('upload_error') %}
+{% endif %}
 </body>
 </html>

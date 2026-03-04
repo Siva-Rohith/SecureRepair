@@ -221,7 +221,7 @@ function closeThankYou() {
 document.addEventListener("DOMContentLoaded", function() {
 
     const dateInput = document.querySelector('input[name="date"]');
-    const today = new Date().toISOString().split("T")[0];
+    const today = new Date().toLocaleDateString('en-CA');
     dateInput.setAttribute("min", today);
 
     const bookingForm = document.querySelector("#bookingModal form");

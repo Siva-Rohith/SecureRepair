@@ -373,23 +373,23 @@ def update_profile():
 
         if allowed_file(file.filename):
 
-            filename = secure_filename(file.filename)
+            filename = f"user_{session['user_id']}_{secure_filename(file.filename)}"
 
-            filepath = os.path.join("static/uploads", filename)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(filepath)
 
             session['profile_image'] = filename
 
         else:
-            return jsonify({"error": "Invalid file type"})
+            session["upload_error"] = "Invalid file type. Please upload PNG, JPG or JPEG."
+            return redirect("/user-dashboard")
+        cursor.execute("""
+            UPDATE users
+            SET profile_image = ?
+            WHERE id = ?
+        """, (filename, session['user_id']))
 
-            cursor.execute("""
-                UPDATE users
-                SET profile_image = ?
-                WHERE id = ?
-            """, (filename, session['user_id']))
-
-            session['profile_image'] = filename
+        session['profile_image'] = filename
 
     conn.commit()
     conn.close()
