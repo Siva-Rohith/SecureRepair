@@ -11,11 +11,17 @@ from werkzeug.security import check_password_hash
 app = Flask(__name__)
 from datetime import timedelta
 
+
+
 app.config['SECRET_KEY'] = secrets.token_hex(16)
 app.permanent_session_lifetime = timedelta(minutes=10)
 
 
+ALLOWED_EXTENSIONS = {'png','jpg','jpeg'}
 
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.',1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 # Create database table
@@ -57,7 +63,10 @@ def init_db():
         preferred_date TEXT,
         time_slot TEXT,
         status TEXT DEFAULT 'Pending',
-        created_at TEXT
+        created_at TEXT,
+        completed_at TEXT,
+        cancel_reason TEXT,
+        cancelled_at TEXT
     )
     """)
     conn.commit()
@@ -123,6 +132,60 @@ def book():
     conn.close()
 
     return jsonify({"success": True})
+
+
+
+@app.route('/cancel-booking/<id>', methods=['POST'])
+def cancel_booking(id):
+
+    if not session.get('user_id'):
+        return jsonify({"success": False})
+
+    data = request.get_json()
+    reason = data.get("reason")
+
+    conn = sqlite3.connect('database.db')
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT user_id, status FROM bookings WHERE id = ?
+    """, (id,))
+    booking = cursor.fetchone()
+
+    if not booking:
+        conn.close()
+        return jsonify({"success": False})
+
+    if booking[0] != session['user_id']:
+        conn.close()
+        return jsonify({"success": False})
+
+    if booking[1] == "Completed":
+        conn.close()
+        return jsonify({"success": False})
+
+    cancel_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    cursor.execute("""
+        UPDATE bookings
+        SET status = 'Cancelled',
+            cancel_reason = ?,
+            cancelled_at = ?
+        WHERE id = ?
+    """, (reason, cancel_time, id))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"success": True})
+
+
+
+
+
+
+
+
 
 
 
@@ -267,8 +330,6 @@ def user_dashboard():
     rows = cursor.fetchall()
     bookings = [dict(row) for row in rows]
     conn.close()
-    print("Bookings fetched:", bookings)
-    print("Logged user:", session.get('user_id'))
     return render_template('user_dashboard.html', bookings=bookings)
 
 
@@ -306,15 +367,21 @@ def update_profile():
     """, (name, email, mobile, session['user_id']))
 
     # Handle image upload
-    if 'profile_image' in request.files:
-        file = request.files['profile_image']
-        if file and file.filename != "":
-            from werkzeug.utils import secure_filename
-            import os
+    file = request.files.get('profile_image')
+
+    if file and file.filename != "":
+
+        if allowed_file(file.filename):
 
             filename = secure_filename(file.filename)
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+
+            filepath = os.path.join("static/uploads", filename)
             file.save(filepath)
+
+            session['profile_image'] = filename
+
+        else:
+            return jsonify({"error": "Invalid file type"})
 
             cursor.execute("""
                 UPDATE users
@@ -341,8 +408,6 @@ def update_profile():
 
 
 
-
-
 @app.route('/logout-user')
 def logout_user():
     session.clear()   
@@ -355,7 +420,7 @@ def logout_user():
 @app.route('/admin')
 def admin():
     if not session.get('admin'):
-        return redirect('/login')
+        return redirect('/loginhead')
 
     page = request.args.get('page', 1, type=int)
     sort = request.args.get('sort', 'id_desc')
@@ -464,7 +529,7 @@ def export_csv():
 @app.route('/delete/<id>')
 def delete(id):
     if not session.get('admin'):
-        return redirect('/login')
+        return redirect('/loginhead')
 
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
@@ -476,9 +541,9 @@ def delete(id):
 
 
 
-
 @app.route('/toggle/<id>', methods=['POST'])
 def toggle_status(id):
+
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
 
@@ -490,9 +555,20 @@ def toggle_status(id):
         return jsonify({"success": False})
 
     current_status = result[0]
-    new_status = 'Completed' if current_status == 'Pending' else 'Pending'
 
-    cursor.execute("UPDATE bookings SET status = ? WHERE id = ?", (new_status, id))
+    # Do not allow toggle for cancelled bookings
+    if current_status == "Cancelled":
+        conn.close()
+        return jsonify({"success": False})
+
+    # Normal toggle
+    new_status = "Completed" if current_status == "Pending" else "Pending"
+
+    cursor.execute(
+        "UPDATE bookings SET status = ? WHERE id = ?",
+        (new_status, id)
+    )
+
     conn.commit()
     conn.close()
 
@@ -503,19 +579,18 @@ def toggle_status(id):
 
 
 
-
 # For Login
 
 
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/loginhead', methods=['GET', 'POST'])
 def login():
 
     stored_password = "scrypt:32768:8:1$I5W3l0w0R8bCEaMR$622d98f696f09e62aae8be623f0fa1f8cf43d3e5448ae890e6df9a632ac0c719840cbe7d1c35b7a561fa1486f3ed5f7fca1b3d34089e42d2462a2a891b5b8345"
 
 
     if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
+        username = request.form['username']
+        password = request.form['password']
 
         if username == "admin" and check_password_hash(stored_password, password):
             session.permanent = True
@@ -524,7 +599,7 @@ def login():
         else:
             return "Invalid Credentials"
 
-    return render_template('login.html')
+    return render_template('loginhead.html')
 
 
 
@@ -535,7 +610,7 @@ def login():
 @app.route('/logout')
 def logout():
     session.pop('admin', None)
-    return redirect('/login')
+    return redirect('/loginhead')
 
 
 

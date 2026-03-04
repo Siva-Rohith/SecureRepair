@@ -170,6 +170,13 @@
         <button onclick="closeThankYou()">OK</button>
     </div>
 </div>
+    
+<div id="timeWarningModal" class="time-warning-modal">
+    <div class="time-warning-box">
+        <p id="timeWarningText"></p>
+        <button onclick="closeTimeWarning()">OK</button>
+    </div>
+</div>
 
 <script src="https://unpkg.com/lucide@latest"></script>
 
@@ -192,6 +199,7 @@ function revealSections() {
 function openBooking() {
     document.getElementById("bookingModal").classList.add("show");
     document.body.style.overflow = "hidden";
+    setTimeout(updateTimeSlots, 200);
 }
 
 function closeBooking() {
@@ -262,76 +270,133 @@ document.querySelector("input[name='mobile']")
     this.value = this.value.replace(/\D/g, '');
 });
 </script>
-
 <script>
-document.querySelectorAll(".form-group input, .form-group textarea")
-.forEach(function(input) {
+function showTimeWarning(message) {
+    document.getElementById("timeWarningText").innerText = message;
+    document.getElementById("timeWarningModal").classList.add("show");
+}
 
-    // When typing
-    input.addEventListener("input", function() {
-        if (this.value.trim() !== "") {
-            this.classList.add("filled");
+function closeTimeWarning() {
+    document.getElementById("timeWarningModal").classList.remove("show");
+}
+
+function updateTimeSlots() {
+
+    const dateInput = document.querySelector('input[name="date"]');
+    const timeSelect = document.querySelector('select[name="time_slot"]');
+
+    if (!dateInput || !timeSelect) return;
+
+    const selectedDate = dateInput.value;
+    const now = new Date();
+    const todayStr = now.toISOString().split("T")[0];
+
+    function convertTo24Hour(timeStr) {
+        let [time, period] = timeStr.trim().split(" ");
+        let [hour] = time.split(":");
+        hour = parseInt(hour);
+
+        if (period === "PM" && hour !== 12) hour += 12;
+        if (period === "AM" && hour === 12) hour = 0;
+
+        return hour;
+    }
+
+    let allDisabled = true;
+
+    Array.from(timeSelect.options).forEach(option => {
+
+        if (!option.value) return;
+
+        if (selectedDate === todayStr) {
+
+            let parts = option.value.split("-");
+            let endTime = parts[1].trim();
+            let endHour = convertTo24Hour(endTime);
+
+            if (now.getHours() >= endHour) {
+                option.disabled = true;
+            } else {
+                option.disabled = false;
+                allDisabled = false;
+            }
+
         } else {
-            this.classList.remove("filled");
+            option.disabled = false;
+            allDisabled = false;
         }
     });
 
-    // On page load (if autofilled)
-    if (input.value.trim() !== "") {
-        input.classList.add("filled");
+    if (selectedDate === todayStr && allDisabled) {
+
+    showTimeWarning("All time slots for today are over. Please choose another date.");
+
+    const dateInput = document.querySelector('input[name="date"]');
+    const timeSelect = document.querySelector('select[name="time_slot"]');
+
+    dateInput.value = "";   // clear today's date
+    timeSelect.value = "";  // reset slot dropdown
+}
+}
+
+document.addEventListener("change", function(e) {
+
+    if (e.target.name === "date") {
+        updateTimeSlots();
     }
+
+    if (e.target.name === "time_slot") {
+
+    const dateInput = document.querySelector('input[name="date"]');
+    const selectedOption = e.target.options[e.target.selectedIndex];
+
+    if (!dateInput.value) {
+        e.target.value = "";
+        showTimeWarning("Please select a date first.");
+        return;
+    }
+
+    if (selectedOption.disabled) {
+        e.target.value = "";
+        showTimeWarning("Please select a time slot after the current time.");
+        return;
+    }
+}
 });
-</script>
 
-<script>
-document.addEventListener("DOMContentLoaded", function() {
 
-    const dateInput = document.getElementById("bookingDate");
-    const timeSelect = document.getElementById("timeSlot");
+document.addEventListener("DOMContentLoaded", function () {
 
-    const slotMap = {
-        "9:00 AM - 11:00 AM": 11,
-        "11:00 AM - 1:00 PM": 13,
-        "2:00 PM - 4:00 PM": 16,
-        "4:00 PM - 6:00 PM": 18
-    };
+    function updateFloatingLabels() {
+        const fields = document.querySelectorAll(".form-group input, .form-group textarea");
 
-    function updateSlots() {
-
-        const selectedDate = dateInput.value;
-        if (!selectedDate) return;
-
-        const today = new Date();
-        const selected = new Date(selectedDate);
-
-        const isToday =
-            selected.getFullYear() === today.getFullYear() &&
-            selected.getMonth() === today.getMonth() &&
-            selected.getDate() === today.getDate();
-
-        Array.from(timeSelect.options).forEach(option => {
-
-            if (!slotMap[option.value]) return;
-
-            if (isToday) {
-                const currentHour = today.getHours();
-                const slotEndHour = slotMap[option.value];
-
-                if (currentHour >= slotEndHour) {
-                    option.disabled = true;
-                } else {
-                    option.disabled = false;
-                }
+        fields.forEach(field => {
+            if (field.value.trim() !== "") {
+                field.classList.add("filled");
             } else {
-                option.disabled = false;
+                field.classList.remove("filled");
             }
         });
     }
 
-    dateInput.addEventListener("change", updateSlots);
+    // When typing
+    document.querySelectorAll(".form-group input, .form-group textarea")
+    .forEach(field => {
+        field.addEventListener("input", updateFloatingLabels);
+        field.addEventListener("change", updateFloatingLabels);
+        field.addEventListener("blur", updateFloatingLabels);
+    });
+
+    // Run immediately
+    updateFloatingLabels();
+
+    // Run after Chrome autofill finishes
+    setTimeout(updateFloatingLabels, 500);
+    setTimeout(updateFloatingLabels, 1000);
+
 });
+
+
 </script>
-
-
 </body>
 </html>

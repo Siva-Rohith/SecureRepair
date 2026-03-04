@@ -4,6 +4,7 @@
     <title>My Bookings - SecureRepair</title>
     <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}"> -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/user.css') }}">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>
 
@@ -11,12 +12,21 @@
 
     <div class="main-content" style="margin-left:0;">
 
-        <nav class="topbar">
-            <div class="topbar-title">
-                Welcome, {{ session['user_name'] }}
-            </div>
-            <a href="/logout-user" class="logout-btn">Logout</a>
-        </nav>
+        <nav class="navbar">
+
+    <!-- LEFT SIDE (Welcome + Brand stacked) -->
+    <div class="nav-left">
+        <span class="welcome-text">Welcome, {{ session['user_name'] }}</span>
+        <div class="logo">SecureRepair</div>
+    </div>
+
+    <!-- RIGHT SIDE (Home + Logout) -->
+    <div class="nav-right">
+        <a href="/" class="nav-link">Home</a>
+        <a href="/logout-user" class="logout-btn">Logout</a>
+    </div>
+
+</nav>
 
         <section class="content-wrapper">
 
@@ -63,7 +73,8 @@
     <!-- Profile Sidebar -->
     <div class="profile-card">
         <div class="profile-image">
-            <img src="{{ url_for('static', filename='uploads/' + session.get('profile_image', 'default.png')) }}">
+            <img id="mainProfileImage"
+src="{{ url_for('static', filename='uploads/' + (session.get('profile_image') or 'default.png')) }}">
         </div>
 
         <h3>{{ session['user_name'] }}</h3>
@@ -73,72 +84,301 @@
         <button class="edit-profile-btn">Edit Profile</button>
     </div>
     <div id="editProfileModal" class="modal">
-  <div class="modal-content">
-    <h3>Edit Profile</h3>
 
-    <form method="POST" action="/update-profile" enctype="multipart/form-data">
-        <input type="text" name="name" value="{{ session['user_name'] }}" required>
-        <input type="email" name="email" value="{{ session['user_email'] }}" required>
-        <input type="text" name="mobile" value="{{ session['user_mobile'] }}" required>
+<div class="profile-modal">
 
-        <input type="file" name="profile_image">
+<h3>Edit Profile</h3>
 
-        <button type="submit">Save Changes</button>
-    </form>
+<form method="POST" action="/update-profile" enctype="multipart/form-data" class="profile-form">
 
-    <button onclick="closeEditModal()">Cancel</button>
-  </div>
+    
+        <div class="profile-image-section">
+
+    <img id="profileImage"
+src="{{ url_for('static', filename='uploads/' + (session.get('profile_image') or 'default.png')) }}">
+
+    <label for="imageUpload" class="upload-btn">
+        Change Photo
+    </label>
+
+    <input type="file" name="profile_image" id="imageUpload" hidden>
+
+    </div>
+
+    <div class="profile-fields">
+
+        <div class="input-group">
+            <label>Name</label>
+            <input type="text" name="name" value="{{ session['user_name'] }}" required>
+        </div>
+
+        <div class="input-group">
+            <label>Email</label>
+            <input type="email" name="email" value="{{ session['user_email'] }}" required>
+        </div>
+
+        <div class="input-group">
+            <label>Mobile</label>
+            <input type="text" name="mobile" value="{{ session['user_mobile'] }}" required>
+        </div>
+
+    </div>
+
+    <div class="profile-actions">
+
+        <button type="button" class="btn-secondary"
+        onclick="closeEditModal()">Cancel</button>
+
+        <button type="submit" class="btn-primary">
+        Save Changes
+        </button>
+
+    </div>
+
+</form>
+
+</div>
 </div>
     <!-- Bookings Section -->
     <div class="bookings-section">
 
         <h3>My Bookings</h3>
+        <div class="booking-search">
+            <input type="text" id="bookingSearch" placeholder="Search bookings...">
+            <button id="searchBtn">
+                <span class="material-icons">search</span>
+            </button>
+        </div>
 
-        {% for booking in bookings %}
-        <div class="booking-card">
+        {% if bookings %}
+            {% for booking in bookings %}
+                <div class="booking-card
+                {% if booking.status == 'Pending' %}pending-card
+                {% elif booking.status == 'Completed' %}completed-card
+                {% elif booking.status == 'Cancelled' %}cancelled-card
+                {% endif %}">
 
-            <div class="booking-header">
-                <span class="sr-id">{{ booking.id }}</span>
-                <span class="status {% if booking.status=='Pending' %}pending{% else %}completed{% endif %}">
-                    {{ booking.status }}
-                </span>
+    <!-- HEADER -->
+    <div class="booking-header">
+        <div class="sr-section">
+            <span class="sr-label">Service ID</span>
+            <span class="sr-id">{{ booking.id }}</span>
+        </div>
+
+       <span class="status-badge
+        {% if booking.status=='Pending' %}pending
+        {% elif booking.status=='Completed' %}completed
+        {% elif booking.status=='Cancelled' %}cancelled
+        {% endif %}">
+        {{ booking.status }}
+        </span>
+    </div>
+
+    <!-- BODY -->
+    <div class="booking-body">
+        <div class="info-row">
+
+            <div class="info-title-line">
+            <span class="material-icons info-icon">devices</span>
+            <span class="info-title">Device</span>
             </div>
 
-            <div class="booking-body">
-                <p><strong>Device:</strong> {{ booking.device }}</p>
-                <p><strong>Issue:</strong> {{ booking.issue }}</p>
-                <p><strong>Preferred Date:</strong> {{ booking.preferred_date }}</p>
-                <p><strong>Booked Date:</strong> {{ booking.created_at[:10] }}</p>
+            <div class="info-value">
+            {{ booking.device }}
             </div>
 
-            <div class="booking-footer">
-                <button class="btn-view view-btn"
-                    data-booking='{{ booking|tojson }}'>
-                    View Details
+            </div>
+        <div class="info-row">
+
+        <div class="info-title-line">
+        <span class="material-icons info-icon">build</span>
+        <span class="info-title">Issue</span>
+        </div>
+
+        <div class="info-value">
+        {{ booking.issue }} 
+        </div>
+
+        </div>
+
+        <div class="info-row">
+
+        <div class="info-title-line">
+        <span class="material-icons info-icon">event</span>
+        <span class="info-title">Preferred Date & Time Slot</span>
+        </div>
+
+        <div class="info-value">
+        Date:&nbsp;&nbsp;{{ booking.preferred_date }} <br>Slot:&nbsp;&nbsp; {{ booking.time_slot }}
+        </div>
+
+        </div>
+
+        <div class="info-row">
+
+        <div class="info-title-line">
+        <span class="material-icons info-icon">schedule</span>
+        <span class="info-title">Booked On</span>
+        </div>
+
+        <div class="info-value">
+        {{ booking.created_at[:10] }}
+        </div>
+
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="booking-footer">
+
+    <button class="btn-view view-btn"
+        data-booking='{{ booking|tojson }}'>
+        View Details
+    </button>
+
+    {% if booking.status == "Pending" %}
+        <button class="btn-cancel"
+
+        onclick="openCancelModal('{{ booking.id }}')">
+        Cancel Booking
+        </button>
+
+    {% elif booking.status == "Cancelled" %}
+        <div class="cancel-reason">
+            Cancelled: {{ booking.cancel_reason }}
+        </div>
+    {% endif %}
+
+</div>
+
+</div>
+            {% endfor %}
+{% else %}
+
+        <div class="empty-bookings">
+            <span class="material-icons">build</span>
+            <h3>No Bookings Yet</h3>
+            <p>You haven't booked any repair service.</p>
+            <a href="/book" class="book-service-btn">Book a Repair</a>
+        </div>
+
+{% endif %}
+
+<div id="cancelModal" class="cancel-modal">
+    <div class="cancel-content">
+
+        <h3>Cancel Booking</h3>
+        <p class="cancel-subtitle">Please tell us why you're cancelling:</p>
+
+        <form id="cancelForm">
+
+            <div class="reason-option">
+                <input type="radio" name="reason" value="Issue resolved" required>
+                <label>Issue resolved</label>
+            </div>
+
+            <div class="reason-option">
+                <input type="radio" name="reason" value="Booked by mistake">
+                <label>Booked by mistake</label>
+            </div>
+
+            <div class="reason-option">
+                <input type="radio" name="reason" value="Service delay">
+                <label>Service delay</label>
+            </div>
+
+            <div class="reason-option">
+                <input type="radio" name="reason" value="Price concern">
+                <label>Price concern</label>
+            </div>
+
+            <div class="reason-option">
+                <input type="radio" name="reason" value="Other" id="otherOption">
+                <label>Other</label>
+            </div>
+
+            <textarea id="otherText"
+                placeholder="Please specify your reason..."
+                style="display:none;"></textarea>
+
+            <div class="cancel-actions">
+                <button type="button" class="btn-close"
+                    onclick="closeCancelModal()">Close</button>
+
+                <button type="submit" class="btn-confirm">
+                    Confirm Cancel
                 </button>
             </div>
 
-        </div>
-        {% endfor %}
+        </form>
+    </div>
+</div>
 
     </div>
 
 </div>
-                <div id="userViewModal" class="modal">
-    <div class="modal-content">
-        <h3>Booking Details</h3>
+               <div id="userViewModal" class="modal">
 
-        <p><strong>SR-ID:</strong> <span id="u_id"></span></p>
-        <p><strong>Device:</strong> <span id="u_device"></span></p>
-        <p><strong>Issue:</strong> <span id="u_issue"></span></p>
-        <p><strong>Address:</strong> <span id="u_address"></span></p>
-        <p><strong>Preferred Date:</strong> <span id="u_pref"></span></p>
-        <p><strong>Time Slot:</strong> <span id="u_time"></span></p>
-        <p><strong>Status:</strong> <span id="u_status"></span></p>
-        <p><strong>Booked Date:</strong> <span id="u_created"></span></p>
+<div class="modal-card">
 
-        <button onclick="closeUserModal()" class="btn-complete">Close</button>
-    </div>
+<div class="modal-header">
+    <h3>Service Details</h3>
+    <span class="modal-close" onclick="closeUserModal()">✕</span>
+</div>
+
+<div class="modal-status">
+    <span id="modalStatusBadge" class="status-badge"></span>
+</div>
+
+<div class="modal-body">
+
+<div class="modal-grid">
+
+<div class="modal-item">
+<span class="label">Service ID</span>
+<span id="u_id"></span>
+</div>
+
+<div class="modal-item">
+<span class="label">Device</span>
+<span id="u_device"></span>
+</div>
+
+<div class="modal-item">
+<span class="label">Issue</span>
+<span id="u_issue"></span>
+</div>
+
+<div class="modal-item">
+<span class="label">Address</span>
+<span id="u_address"></span>
+</div>
+
+<div class="modal-item">
+<span class="label">Preferred Date</span>
+<span id="u_pref"></span>
+</div>
+
+<div class="modal-item">
+<span class="label">Time Slot</span>
+<span id="u_time"></span>
+</div>
+
+<div class="modal-item">
+<span class="label">Status</span>
+<span id="u_status"></span>
+</div>
+
+<div class="modal-item">
+<span class="label">Booked On</span>
+<span id="u_created"></span>
+</div>
+
+</div>
+
+</div>
+
+</div>
 </div>
             </div>
 
@@ -162,6 +402,21 @@ document.querySelectorAll(".view-btn").forEach(button => {
         document.getElementById("u_pref").innerText = booking.preferred_date;
         document.getElementById("u_time").innerText = booking.time_slot;
         document.getElementById("u_status").innerText = booking.status;
+        const statusBadge = document.getElementById("modalStatusBadge");
+
+statusBadge.innerText = booking.status;
+
+statusBadge.classList.remove("pending","completed","cancelled");
+
+if(booking.status === "Pending"){
+    statusBadge.classList.add("pending");
+}
+else if(booking.status === "Completed"){
+    statusBadge.classList.add("completed");
+}
+else{
+    statusBadge.classList.add("cancelled");
+}
         document.getElementById("u_created").innerText = booking.created_at.split(' ')[0];
 
         document.getElementById("userViewModal").classList.add("show");
@@ -184,7 +439,188 @@ function closeEditModal() {
 
 
 
+
+
+
 </script>
+
+<script>
+let currentCancelId = null;
+
+function openCancelModal(id) {
+    currentCancelId = id;
+    document.getElementById("cancelModal").classList.add("show");
+}
+
+function closeCancelModal() {
+    document.getElementById("cancelModal").classList.remove("show");
+    document.getElementById("cancelForm").reset();
+    document.getElementById("otherText").style.display = "none";
+}
+
+document.querySelectorAll("input[name='reason']").forEach(radio => {
+    radio.addEventListener("change", function() {
+        if (this.value === "Other") {
+            document.getElementById("otherText").style.display = "block";
+        } else {
+            document.getElementById("otherText").style.display = "none";
+        }
+    });
+});
+document.getElementById("cancelForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+
+    let selectedReason = document.querySelector("input[name='reason']:checked").value;
+
+    if (selectedReason === "Other") {
+        selectedReason = document.getElementById("otherText").value;
+
+        if (!selectedReason.trim()) {
+            alert("Please specify your reason.");
+            return;
+        }
+    }
+
+    fetch(`/cancel-booking/${currentCancelId}`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            reason: selectedReason
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            closeCancelModal();
+            location.reload();
+        } else {
+            alert("Unable to cancel booking.");
+        }
+    });
+});
+
+
+document.addEventListener("DOMContentLoaded", function(){
+
+    // IMAGE PREVIEW FOR EDIT PROFILE
+    const imageUpload = document.getElementById("imageUpload");
+    const preview = document.getElementById("profileImage");
+
+    if(imageUpload){
+        imageUpload.addEventListener("change", function(){
+
+            const file = this.files[0];
+
+            if(file){
+                const reader = new FileReader();
+
+                reader.onload = function(e){
+                    preview.src = e.target.result;
+                };
+
+                reader.readAsDataURL(file);
+            }
+
+        });
+    }
+
+    // PROFILE IMAGE POPUP
+    const mainProfileImage = document.getElementById("mainProfileImage");
+    const popup = document.getElementById("imagePopup");
+    const popupImage = document.getElementById("popupImage");
+
+    if(mainProfileImage){
+        mainProfileImage.addEventListener("click", function(){
+           popup.style.display = "flex";
+            popupImage.src = this.src;
+        });
+    }
+
+    // CLICK OUTSIDE IMAGE TO CLOSE
+    popup.addEventListener("click", function(e){
+        if(e.target === popup){
+           popup.style.display = "none";
+        }
+    });
+
+});
+
+function closeImagePopup(){
+    document.getElementById("imagePopup").style.display = "none";
+}
+
+document.getElementById("imageUpload").addEventListener("change", function(){
+
+    const file = this.files[0];
+
+    if(!file) return;
+
+    const allowed = ["image/png","image/jpeg","image/jpg"];
+
+    if(!allowed.includes(file.type)){
+
+        alert("Invalid file type. Please upload PNG, JPG or JPEG.");
+
+        this.value = "";
+        return;
+
+    }
+
+});
+
+
+
+
+const searchInput = document.getElementById("bookingSearch");
+const searchBtn = document.getElementById("searchBtn");
+
+function searchBookings(){
+
+    const value = searchInput.value.toLowerCase();
+    const cards = document.querySelectorAll(".booking-card");
+
+    cards.forEach(card => {
+
+        const text = card.innerText.toLowerCase();
+
+        if(text.includes(value)){
+            card.style.display = "block";
+        } 
+        else{
+            card.style.display = "none";
+        }
+
+    });
+
+}
+
+/* button click */
+searchBtn.addEventListener("click", searchBookings);
+
+/* typing search */
+searchInput.addEventListener("input", searchBookings);
+
+/* enter key */
+searchInput.addEventListener("keypress", function(e){
+    if(e.key === "Enter"){
+        searchBookings();
+    }
+});
+
+
+</script>
+
+
+
+<div id="imagePopup" class="image-popup">
+
+    <span class="close-popup" onclick="closeImagePopup()">✕</span>
+
+    <img id="popupImage">
+
+</div>
 
 </body>
 </html>

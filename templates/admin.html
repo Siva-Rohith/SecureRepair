@@ -14,10 +14,9 @@
     <aside class="sidebar">
         <h2 class="brand">SecureRepair</h2>
         <ul>
-            <li class="active">Dashboard</li>
-            <li>Bookings</li>
-            <li>Analytics</li>
-            <li>Settings</li>
+            <li id="dashboardBtn" class="active">Dashboard</li>
+            <li id="bookingsBtn">Bookings</li>
+            <li id="analyticsBtn">Analytics</li>
         </ul>
     </aside>
 
@@ -107,7 +106,7 @@
             </div>
 
             <!-- Table -->
-           <div class="table-card">
+           <div id="bookingsSection" class="table-card">
     <table class="admin-table">
         <tr>
             <th>SR-ID</th>
@@ -126,10 +125,27 @@
             <td>{{ booking[8] }}</td>  <!-- Preferred Date -->
 
             <td>
-                <span class="badge {% if booking[10]=='Pending' %}badge-pending{% else %}badge-complete{% endif %}">
-                    {{ booking[10] }}
-                </span>
-            </td>
+                    {% if booking[10] == 'Pending' %}
+                        <span class="badge badge-pending">
+                            Pending
+                        </span>
+
+                    {% elif booking[10] == 'Completed' %}
+                        <span class="badge badge-complete">
+                            Completed
+                        </span>
+
+                    {% elif booking[10] == 'Cancelled' %}
+                        <span class="badge badge-cancelled" onclick="showCancelDetails('{{ booking[13] }}','{{ booking[14] }}')">
+                                
+                            Cancelled ➜
+                            <!-- <span class="cancel-arrow"
+                                onclick="showCancelDetails('{{ booking[13] }}','{{ booking[14] }}')">
+                                ➜
+                            </span> -->
+                        </span>
+                    {% endif %}
+                </td>
 
             <td class="action-buttons">
                 <button type="button"
@@ -138,15 +154,17 @@
                     View
                 </button>
 
-                <button type="button"
-                    onclick="toggleStatus('{{ booking[0] }}', this)"
-                    class="btn-toggle">
-                    {% if booking[9] == 'Pending' %}
-                        Complete
-                    {% else %}
-                        Mark Pending
-                    {% endif %}
-                </button>
+                {% if booking[10] != 'Cancelled' %}
+                    <button type="button"
+                        onclick="toggleStatus('{{ booking[0] }}', this)"
+                        class="btn-toggle">
+                        {% if booking[10] == 'Pending' %}
+                            Complete
+                        {% else %}
+                            Mark Pending
+                        {% endif %}
+                    </button>
+                {% endif %}
 
                 <button type="button"
                     onclick="openDeleteModal('{{ booking[0] }}')"
@@ -225,6 +243,19 @@
     </div>
 </div>
 
+
+
+<div id="cancelDetailsModal" class="modal">
+    <div class="modal-content">
+        <h3>Cancellation Details</h3>
+        <p><strong>Reason:</strong> <span id="cancelReason"></span></p>
+        <p><strong>Cancelled At:</strong> <span id="cancelTime"></span></p>
+        <button onclick="closeCancelDetails()" class="btn-complete">Close</button>
+    </div>
+</div>
+
+
+
 <script>
 let deleteId = null;
 
@@ -270,6 +301,27 @@ function searchTable() {
         rows[i].style.display = rowText.includes(filter) ? "" : "none";
     }
 }
+
+
+
+
+
+function showCancelDetails(reason, time) {
+
+    document.getElementById("cancelReason").innerText =
+        reason ? reason : "No reason provided";
+
+    document.getElementById("cancelTime").innerText =
+        time ? time : "Not available";
+
+    document.getElementById("cancelDetailsModal").classList.add("show");
+}
+
+function closeCancelDetails() {
+    document.getElementById("cancelDetailsModal").classList.remove("show");
+}
+
+
 </script>
 
 <div id="chartValues"
@@ -351,6 +403,37 @@ function toggleStatus(id, buttonElement) {
         }
     });
 }
+
+
+let analyticsChart = null;
+
+analyticsBtn.addEventListener("click", function(){
+
+    analyticsModal.style.display = "flex";
+
+    if(!analyticsChart){
+
+        const analyticsCtx = document.getElementById("analyticsChart");
+
+        analyticsChart = new Chart(analyticsCtx, {
+            type: "bar",
+            data: {
+                labels: ["Pending","Completed"],
+                datasets: [{
+                    label: "Repair Status",
+                    data: [pendingCount, completedCount],
+                    backgroundColor: ["#f59e0b","#10b981"]
+                }]
+            },
+            options:{
+                responsive:true,
+                maintainAspectRatio:false
+            }
+        });
+
+    }
+
+});
 </script>
 
 <script>
@@ -383,8 +466,79 @@ document.querySelectorAll(".view-btn").forEach(button => {
         );
     });
 });
+
+document.addEventListener("DOMContentLoaded", function(){
+
+    const analyticsBtn = document.getElementById("analyticsBtn");
+    const analyticsModal = document.getElementById("analyticsModal");
+    const closeAnalytics = document.querySelector(".close-analytics");
+
+    const bookingsBtn = document.getElementById("bookingsBtn");
+    const bookingSection = document.getElementById("bookingsSection");
+
+    /* BOOKINGS CLICK → SCROLL */
+
+    bookingsBtn.addEventListener("click", function(){
+
+        bookingSection.scrollIntoView({
+            behavior: "smooth"
+        });
+
+    });
+
+    /* ANALYTICS CLICK → OPEN MODAL */
+
+    analyticsBtn.addEventListener("click", function(){
+
+        analyticsModal.style.display = "flex";
+
+    });
+
+    /* CLOSE BUTTON */
+
+    closeAnalytics.addEventListener("click", function(){
+
+        analyticsModal.style.display = "none";
+
+    });
+
+    /* CLICK OUTSIDE CLOSE */
+
+    window.addEventListener("click", function(e){
+
+        if(e.target === analyticsModal){
+            analyticsModal.style.display = "none";
+        }
+
+    });
+const dashboardBtn = document.getElementById("dashboardBtn");
+
+dashboardBtn.addEventListener("click", function(){
+
+    window.scrollTo({
+        top:0,
+        behavior:"smooth"
+    });
+
+});
+});
+
+
 </script>
 
+<div id="analyticsModal" class="analytics-modal">
+
+    <div class="analytics-content">
+
+        <span class="close-analytics">&times;</span>
+
+        <h2>Repair Analytics</h2>
+
+        <canvas id="analyticsChart"></canvas>
+
+    </div>
+
+</div>
 
 
 </body>
