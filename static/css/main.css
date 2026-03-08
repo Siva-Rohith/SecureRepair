@@ -916,3 +916,15 @@ select option:disabled {
     from { transform: scale(0.9); opacity: 0; }
     to { transform: scale(1); opacity: 1; }
 }
+
+
+.login-error{
+background:#fee2e2;
+color:#b91c1c;
+padding:10px;
+border-radius:8px;
+margin-bottom:12px;
+text-align:center;
+border:1px solid #fecaca;
+font-size:14px;
+}

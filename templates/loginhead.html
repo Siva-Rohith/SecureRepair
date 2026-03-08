@@ -8,7 +8,11 @@
 <div class="auth-container">
     <div class="auth-card">
         <h2>Login</h2>
-
+        {% if error %}
+            <div class="login-error">
+                {{ error }}
+            </div>
+        {% endif %}
         <form method="POST">
             <input type="text" name="username" placeholder="Username" required>
             <input type="password" name="password" placeholder="Password" required>
@@ -20,5 +24,14 @@
     </div>
 </div>
 
+
+<script>
+setTimeout(function(){
+    const err = document.querySelector(".login-error");
+    if(err){
+        err.style.display = "none";
+    }
+},2000);
+</script>
 </body>
 </html>
