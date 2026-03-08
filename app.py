@@ -49,6 +49,7 @@ def init_db():
             created_at TEXT
         )
         """)
+    
     # Create bookings table
     cursor.execute("""
      CREATE TABLE IF NOT EXISTS bookings (
@@ -67,6 +68,18 @@ def init_db():
         completed_at TEXT,
         cancel_reason TEXT,
         cancelled_at TEXT
+    )
+    """)
+
+
+    # Chat messages table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        booking_id TEXT,
+        sender TEXT,
+        message TEXT,
+        created_at TEXT
     )
     """)
     conn.commit()
@@ -274,9 +287,12 @@ def user_login():
 
     if request.method == 'POST':
 
-        identifier = request.form['identifier']
-        password = request.form['password']
+        identifier = request.form['identifier'].strip()
+        password = request.form['password'].strip()
 
+# If fields are empty
+        if not identifier or not password:
+            return render_template("user_login.html", error="Invalid username or password")
         conn = sqlite3.connect('database.db')
         cursor = conn.cursor()
 
@@ -303,9 +319,9 @@ def user_login():
                 session['user_mobile'] = user_mobile
                 return redirect('/')
 
-        return "Invalid Credentials"
+            return render_template("user_login.html", error="Invalid email or password")
 
-    return render_template('user_login.html')
+    return render_template("user_login.html", error="Invalid email or password")
 
 
 
@@ -331,6 +347,58 @@ def user_dashboard():
     bookings = [dict(row) for row in rows]
     conn.close()
     return render_template('user_dashboard.html', bookings=bookings)
+
+
+
+
+@app.route('/user-chats')
+def user_chats():
+
+    if not session.get('user_id'):
+        return redirect('/user-login')
+
+    conn = sqlite3.connect('database.db')
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT id, device, issue, status
+        FROM bookings
+        WHERE user_id = ?
+        ORDER BY created_at DESC
+    """, (session['user_id'],))
+
+    rows = cursor.fetchall()
+    bookings = [dict(row) for row in rows]
+
+    conn.close()
+
+    return render_template('user_chats.html', bookings=bookings)
+
+
+
+
+@app.route('/chat/<booking_id>')
+def chat_page(booking_id):
+
+    if not session.get('user_id'):
+        return redirect('/user-login')
+
+    conn = sqlite3.connect('database.db')
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT id, device, issue
+        FROM bookings
+        WHERE id = ? AND user_id = ?
+    """, (booking_id, session['user_id']))
+
+    booking = cursor.fetchone()
+
+    conn.close()
+
+    return render_template("chat_page.html", booking=dict(booking))
 
 
 
@@ -498,6 +566,27 @@ def admin():
     )
 
 
+@app.route('/admin-chat/<booking_id>')
+def admin_chat(booking_id):
+
+    if not session.get('admin'):
+        return redirect('/loginhead')
+
+    conn = sqlite3.connect('database.db')
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT id, device, issue
+        FROM bookings
+        WHERE id = ?
+    """,(booking_id,))
+
+    booking = cursor.fetchone()
+
+    conn.close()
+
+    return render_template("admin_chat.html", booking=dict(booking))
 
 
 
@@ -597,8 +686,7 @@ def login():
             session['admin'] = True
             return redirect('/admin')
         else:
-            return "Invalid Credentials"
-
+            return render_template("loginhead.html", error="Invalid username or password")
     return render_template('loginhead.html')
 
 
@@ -612,6 +700,54 @@ def logout():
     session.pop('admin', None)
     return redirect('/loginhead')
 
+
+@app.route('/send-message', methods=['POST'])
+def send_message():
+
+    booking_id = request.form['booking_id']
+    message = request.form['message']
+
+    # Detect sender
+    if session.get('admin'):
+        sender = "admin"
+    else:
+        sender = "user"
+
+    conn = sqlite3.connect('database.db')
+    cursor = conn.cursor()
+
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    cursor.execute("""
+        INSERT INTO messages (booking_id, sender, message, created_at)
+        VALUES (?, ?, ?, ?)
+    """, (booking_id, sender, message, now))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"success": True})
+
+
+@app.route('/get-messages/<booking_id>')
+def get_messages(booking_id):
+
+    conn = sqlite3.connect('database.db')
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT * FROM messages
+        WHERE booking_id = ?
+        ORDER BY created_at ASC
+    """, (booking_id,))
+
+    rows = cursor.fetchall()
+    messages = [dict(row) for row in rows]
+
+    conn.close()
+
+    return jsonify(messages)
 
 
 if __name__ == '__main__':
