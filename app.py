@@ -707,11 +707,13 @@ def send_message():
     booking_id = request.form['booking_id']
     message = request.form['message']
 
-    # Detect sender
+    # Detect sender correctly
     if session.get('admin'):
         sender = "admin"
-    else:
+    elif session.get('user_id'):
         sender = "user"
+    else:
+        return jsonify({"success": False})
 
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
@@ -749,6 +751,24 @@ def get_messages(booking_id):
 
     return jsonify(messages)
 
+
+typing_status = {}
+
+@app.route('/typing', methods=['POST'])
+def typing():
+    booking_id = request.form['booking_id']
+    typing_status[booking_id] = True
+    return jsonify({"success": True})
+
+
+@app.route('/check-typing/<booking_id>')
+def check_typing(booking_id):
+
+    status = typing_status.get(booking_id, False)
+
+    typing_status[booking_id] = False
+
+    return jsonify({"typing": status})
 
 if __name__ == '__main__':
     app.run(debug=True)

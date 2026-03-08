@@ -83,12 +83,14 @@ padding:12px 20px;
 cursor:pointer;
 }
 
+
 .chat-container{
 display:flex;
 flex-direction:column;
 gap:10px;
 padding:15px;
 }
+
 .chat-msg{
 display:flex;
 flex-direction:column;
@@ -99,6 +101,7 @@ font-size:14px;
 word-wrap:break-word;
 position:relative;
 }
+
 /* USER SIDE (RIGHT) */
 .chat-msg.right{
 align-self:flex-end;
@@ -181,7 +184,7 @@ position:relative;
 <div id="messages" class="chat-messages">
 </div>
 <div id="typingIndicator" class="typing-indicator">
- {{booking.user}} is typing...
+technician is typing...
 </div>
 <div class="chat-input">
 
@@ -209,7 +212,7 @@ const container = document.getElementById("messages");
 
 container.innerHTML="";
 
-let currentUser = "user";
+let currentUser = "admin";
 
 data.forEach(msg => {
 
@@ -234,8 +237,6 @@ container.scrollTop = container.scrollHeight;
 
 });
 
-}
-
 fetch("/check-typing/" + bookingId)
 .then(res=>res.json())
 .then(data=>{
@@ -247,6 +248,7 @@ fetch("/check-typing/" + bookingId)
         indicator.style.display="none";
     }
 });
+}
 
 function sendMessage(){
 
