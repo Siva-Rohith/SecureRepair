@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<title>Chats - SecureRepair</title>
+<!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/user.css') }}"> -->
+<!-- <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"> -->
+
+<style>
+
+.chat-container{
+    max-width:900px;
+    margin:auto;
+    padding:40px;
+}
+
+.chat-card{
+    background:white;
+    border-radius:12px;
+    padding:20px;
+    margin-bottom:15px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    box-shadow:0 5px 15px rgba(0,0,0,0.08);
+}
+
+.chat-info h3{
+    margin:0;
+}
+
+.chat-info p{
+    margin:4px 0;
+    color:#666;
+}
+
+.open-chat-btn{
+    background:#2563eb;
+    color:white;
+    border:none;
+    padding:8px 14px;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+.open-chat-btn:hover{
+    background:#1d4ed8;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<nav class="navbar">
+
+<div class="logo">SecureRepair</div>
+
+<div class="nav-right">
+<a href="/user-dashboard">Profile</a>
+<a href="/user-chats">Chats</a>
+<a href="/logout-user">Logout</a>
+</div>
+
+</nav>
+
+<div class="chat-container">
+
+<h2>My Chats</h2>
+
+{% if bookings %}
+
+{% for booking in bookings %}
+
+<div class="chat-card">
+
+<div class="chat-info">
+<h3>Service ID: {{ booking.id }}</h3>
+<p>{{ booking.device }}</p>
+<p>{{ booking.issue }}</p>
+</div>
+
+<a href="/chat/{{ booking.id }}">
+<button class="open-chat-btn">Open Chat</button>
+</a>
+
+</div>
+
+{% endfor %}
+
+{% else %}
+
+<p>No chats available.</p>
+
+{% endif %}
+
+</div>
+
+
+
+<script>
+
+document.getElementById("chatForm").addEventListener("submit", function(e){
+
+    e.preventDefault();
+
+    const messageInput = document.getElementById("messageInput");
+
+    const formData = new FormData();
+
+    formData.append("booking_id", currentBookingId);
+    formData.append("message", messageInput.value);
+
+    fetch("/send-message", {
+        method: "POST",
+        body: formData
+    })
+
+    .then(res => res.json())
+    .then(data => {
+
+        if(data.success){
+            messageInput.value = "";
+            loadMessages();
+        }
+
+    });
+
+});
+
+</script>
+
+
+</body>
+</html>

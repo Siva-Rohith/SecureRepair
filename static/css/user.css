@@ -8,6 +8,15 @@ body {
 margin:0;
 font-family:'Poppins','Segoe UI',sans-serif;
 color:#1e293b;
+min-height:100vh;
+-webkit-font-smoothing:antialiased;
+
+background:
+radial-gradient(circle at 20% 20%, rgba(59,130,246,0.08), transparent 40%),
+radial-gradient(circle at 80% 0%, rgba(139,92,246,0.08), transparent 40%),
+radial-gradient(circle at 50% 100%, rgba(16,185,129,0.06), transparent 40%),
+#f8fafc;
+}
 
 body::before{
 content:"";
@@ -20,13 +29,6 @@ background:
 linear-gradient(120deg, transparent 40%, rgba(255,255,255,0.4), transparent 60%);
 opacity:0.25;
 pointer-events:none;
-}
-
-background:
-radial-gradient(circle at 20% 20%, rgba(59,130,246,0.08), transparent 40%),
-radial-gradient(circle at 80% 0%, rgba(139,92,246,0.08), transparent 40%),
-radial-gradient(circle at 50% 100%, rgba(16,185,129,0.06), transparent 40%),
-#f8fafc;
 
 min-height:100vh;
 -webkit-font-smoothing:antialiased;
@@ -188,24 +190,25 @@ min-height:100vh;
     color: #475569;
     line-height: 1.5;
 }
-.btn-view {
-    margin-top: 12px;
-    padding: 8px 18px;
-    border-radius: 10px;
-    border: none;
-    background: #3b82f6;
-    color: white;
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: 600;
-    font-family: 'Poppins', sans-serif;
-    transition: all 0.25s ease;
+.btn-view{
+background:#2563eb;
+color:white;
+padding:9px 20px;
+border-radius:10px;
+border:none;
+font-size:13px;
+font-weight:500;
+cursor:pointer;
+
+transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
-.btn-view:hover {
-    background: #2563eb;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+
+.btn-view:hover{
+background:#1d4ed8;
+transform:translateY(-2px);
+box-shadow:0 6px 18px rgba(37,99,235,0.3);
 }
+
 .cancel-btn {
     margin-left: 10px;
     padding: 8px 18px;
@@ -434,22 +437,6 @@ margin-bottom:24px;
 }
 
 /* BUTTONS */
-.btn-view {
-    background: linear-gradient(135deg, #2563eb, #4f46e5);
-    color: white;
-    padding: 9px 20px;
-    border-radius: 10px;
-    border: none;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: 0.3s ease;
-}
-
-.btn-view:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 25px rgba(37,99,235,0.3);
-}
 
 .btn-cancel {
     background: #ef4444;
@@ -728,12 +715,9 @@ textarea {
     margin-bottom:18px;
     border:1px solid rgba(255,255,255,0.25);
     box-shadow:0 8px 20px rgba(0,0,0,0.08);
-    transition:0.25s;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
-.booking-card:hover{
-    transform:translateY(-4px);
-}
 
 /* Pending */
 
@@ -875,12 +859,6 @@ color:#991b1b;
 }
 
 
-.status-badge.cancelled{
-background:#fee2e2;
-color:#991b1b;
-}
-
-
 
 
 
@@ -898,10 +876,7 @@ background:rgba(0,0,0,0.1);
 transition:transform 0.25s ease, box-shadow 0.25s ease;
 }
 
-.booking-card:hover{
-transform:translateY(-6px);
-box-shadow:0 15px 35px rgba(0,0,0,0.15);
-}
+
 
 
 .pending-card{
@@ -1005,6 +980,10 @@ transform:scale(1.08);
 transition:0.25s ease;
 }
 
+.booking-card:hover{
+transform:translateY(-4px);
+box-shadow:0 15px 35px rgba(0,0,0,0.15);
+}
 /* status colored icons */
 
 .pending-card .info-icon{

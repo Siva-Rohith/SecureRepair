@@ -22,9 +22,10 @@
 
     <!-- RIGHT SIDE (Home + Logout) -->
     <div class="nav-right">
-        <a href="/" class="nav-link">Home</a>
-        <a href="/logout-user" class="logout-btn">Logout</a>
-    </div>
+    <a href="/user-dashboard" class="nav-link">Profile</a>
+    <a href="/user-chats" class="nav-link">Chats</a>
+    <a href="/logout-user" class="logout-btn">Logout</a>
+</div>
 
 </nav>
 
@@ -73,8 +74,9 @@
     <!-- Profile Sidebar -->
     <div class="profile-card">
         <div class="profile-image">
-            <img id="mainProfileImage"
-src="{{ url_for('static', filename='uploads/' + (session.get('profile_image') or 'default.png')) }}">
+           <img id="mainProfileImage"
+                alt="Profile Image"
+                src="{{ url_for('static', filename='uploads/' + (session.get('profile_image') or 'default.png')) }}">
         </div>
 
         <h3>{{ session['user_name'] }}</h3>
@@ -375,7 +377,6 @@ src="{{ url_for('static', filename='uploads/' + (session.get('profile_image') or
 </div>
 
 </div>
-
 </div>
 
 </div>
@@ -417,10 +418,14 @@ else if(booking.status === "Completed"){
 else{
     statusBadge.classList.add("cancelled");
 }
-        document.getElementById("u_created").innerText = booking.created_at.split(' ')[0];
+        document.getElementById("u_created").innerText =
+        booking.created_at ? booking.created_at.split(' ')[0] : "";
 
         document.getElementById("userViewModal").classList.add("show");
     });
+
+
+    
 });
 
 function closeUserModal() {
@@ -429,9 +434,13 @@ function closeUserModal() {
 
 
 
-document.querySelector(".edit-profile-btn").addEventListener("click", function() {
-    document.getElementById("editProfileModal").classList.add("show");
-});
+const editBtn = document.querySelector(".edit-profile-btn");
+
+if(editBtn){
+    editBtn.addEventListener("click", function(){
+        document.getElementById("editProfileModal").classList.add("show");
+    });
+}
 
 function closeEditModal() {
     document.getElementById("editProfileModal").classList.remove("show");
@@ -548,11 +557,14 @@ document.addEventListener("DOMContentLoaded", function(){
     }
 
     // CLICK OUTSIDE IMAGE TO CLOSE
+   
+    if(popup){
     popup.addEventListener("click", function(e){
         if(e.target === popup){
-           popup.style.display = "none";
+            popup.style.display = "none";
         }
     });
+}
 
 });
 
@@ -564,43 +576,41 @@ function closeImagePopup(){
 
 
 
+document.addEventListener("DOMContentLoaded", function(){
 
-const searchInput = document.getElementById("bookingSearch");
-const searchBtn = document.getElementById("searchBtn");
+    const searchInput = document.getElementById("bookingSearch");
+    const searchBtn = document.getElementById("searchBtn");
 
-function searchBookings(){
+    function searchBookings(){
 
-    const value = searchInput.value.toLowerCase();
-    const cards = document.querySelectorAll(".booking-card");
+        const value = searchInput.value.toLowerCase();
+        const cards = document.querySelectorAll(".booking-card");
 
-    cards.forEach(card => {
+        cards.forEach(card => {
 
-        const text = card.innerText.toLowerCase();
+            const text = card.innerText.toLowerCase();
 
-        if(text.includes(value)){
-            card.style.display = "block";
-        } 
-        else{
-            card.style.display = "none";
+            if(text.includes(value)){
+                card.style.display = "block";
+            } 
+            else{
+                card.style.display = "none";
+            }
+
+        });
+
+    }
+
+    searchBtn.addEventListener("click", searchBookings);
+    searchInput.addEventListener("input", searchBookings);
+
+    searchInput.addEventListener("keypress", function(e){
+        if(e.key === "Enter"){
+            searchBookings();
         }
-
     });
 
-}
-
-/* button click */
-searchBtn.addEventListener("click", searchBookings);
-
-/* typing search */
-searchInput.addEventListener("input", searchBookings);
-
-/* enter key */
-searchInput.addEventListener("keypress", function(e){
-    if(e.key === "Enter"){
-        searchBookings();
-    }
 });
-
 
 
 function showFileError(message){
@@ -611,6 +621,9 @@ function showFileError(message){
 function closeFileError(){
     document.getElementById("fileErrorModal").classList.remove("show");
 }
+
+
+
 
 
 

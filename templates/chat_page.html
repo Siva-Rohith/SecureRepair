@@ -1,0 +1,201 @@
+
+<!DOCTYPE html>
+
+<html>
+<head>
+
+<title>Chat - SecureRepair</title>
+
+<style>
+
+.chat-page{
+font-family: Arial;
+background:#f3f4f6;
+margin:0;
+}
+
+.chat-page .navbar{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:15px 30px;
+background:white;
+box-shadow:0 3px 10px rgba(0,0,0,0.1);
+}
+
+.chat-page .chat-container{
+max-width:900px;
+margin:auto;
+margin-top:30px;
+background:white;
+border-radius:12px;
+box-shadow:0 5px 20px rgba(0,0,0,0.1);
+display:flex;
+flex-direction:column;
+height:70vh;
+}
+
+.chat-header{
+padding:15px;
+border-bottom:1px solid #eee;
+}
+
+.chat-messages{
+flex:1;
+padding:20px;
+overflow-y:auto;
+}
+
+.message{
+padding:10px 14px;
+border-radius:10px;
+margin-bottom:10px;
+max-width:60%;
+}
+
+.user{
+background:#2563eb;
+color:white;
+margin-left:auto;
+}
+
+.admin{
+background:#e5e7eb;
+}
+
+.chat-input{
+display:flex;
+border-top:1px solid #eee;
+}
+
+.chat-input input{
+flex:1;
+padding:12px;
+border:none;
+outline:none;
+}
+
+.chat-input button{
+background:#2563eb;
+color:white;
+border:none;
+padding:12px 20px;
+cursor:pointer;
+}
+
+</style>
+
+</head>
+
+<body class="chat-page">
+    <div class="navbar">
+<div>SecureRepair Chat</div>
+
+<div>
+<a href="/user-chats">Back to Chats</a>
+</div>
+
+</div>
+
+<div class="chat-container">
+
+<div class="chat-header">
+
+<b>Service ID:</b> {{ booking.id }} <br> <b>Device:</b> {{ booking.device }} <br> <b>Issue:</b> {{ booking.issue }}
+
+</div>
+
+<div id="messages" class="chat-messages">
+</div>
+
+<div class="chat-input">
+
+<input type="text" id="messageInput" placeholder="Type message...">
+
+<button onclick="sendMessage()">Send</button>
+
+</div>
+
+</div>
+
+<script>
+
+const bookingId = "{{ booking.id }}";
+
+function loadMessages(){
+
+fetch("/get-messages/" + bookingId)
+
+.then(res => res.json())
+
+.then(data => {
+
+const container = document.getElementById("messages");
+
+container.innerHTML="";
+
+data.forEach(msg=>{
+
+let div=document.createElement("div");
+
+div.className="message " + msg.sender;
+
+div.innerText = msg.sender + ": " + msg.message;
+
+container.appendChild(div);
+
+});
+
+container.scrollTop = container.scrollHeight;
+
+});
+
+}
+
+function sendMessage(){
+
+const input = document.getElementById("messageInput");
+
+const message = input.value.trim();
+
+if(!message) return;
+
+const formData = new FormData();
+
+formData.append("booking_id", bookingId);
+formData.append("message", message);
+
+fetch("/send-message",{
+
+method:"POST",
+
+body:formData
+
+})
+
+.then(res=>res.json())
+
+.then(data=>{
+
+if(data.success){
+
+input.value="";
+
+loadMessages();
+
+}
+
+});
+
+}
+
+loadMessages();
+
+setInterval(loadMessages,2000);
+
+</script>
+
+
+
+</body>
+</html>
