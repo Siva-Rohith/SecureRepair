@@ -577,16 +577,17 @@ def admin_chat(booking_id):
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT id, device, issue
+        SELECT bookings.id, bookings.device, bookings.issue, users.name
         FROM bookings
-        WHERE id = ?
-    """,(booking_id,))
+        LEFT JOIN users ON bookings.user_id = users.id
+        WHERE bookings.id = ?
+        """,(booking_id,))
 
     booking = cursor.fetchone()
 
     conn.close()
 
-    return render_template("admin_chat.html", booking=dict(booking))
+    return render_template("admin_chat.html", booking=dict(booking), username=booking["name"])
 
 
 
@@ -756,17 +757,23 @@ typing_status = {}
 
 @app.route('/typing', methods=['POST'])
 def typing():
+
     booking_id = request.form['booking_id']
-    typing_status[booking_id] = True
+
+    if session.get("admin"):
+        typing_status[booking_id] = "admin"
+    elif session.get("user_id"):
+        typing_status[booking_id] = "user"
+
     return jsonify({"success": True})
 
 
 @app.route('/check-typing/<booking_id>')
 def check_typing(booking_id):
 
-    status = typing_status.get(booking_id, False)
+    status = typing_status.get(booking_id, None)
 
-    typing_status[booking_id] = False
+    typing_status[booking_id] = None
 
     return jsonify({"typing": status})
 

@@ -181,7 +181,7 @@ position:relative;
 <div id="messages" class="chat-messages">
 </div>
 <div id="typingIndicator" class="typing-indicator">
- {{booking.user}} is typing...
+ {{username}} is typing...
 </div>
 <div class="chat-input">
 
@@ -224,7 +224,7 @@ data.forEach(msg => {
     div.innerHTML = `
     <span class="msg-text">${msg.message}</span>
     <span class="msg-time">${msg.created_at.slice(11,16)}</span>
-`;
+    `;
 
     container.appendChild(div);
 
@@ -234,19 +234,22 @@ container.scrollTop = container.scrollHeight;
 
 });
 
-}
 
+// typing check (MOVE HERE)
 fetch("/check-typing/" + bookingId)
 .then(res=>res.json())
 .then(data=>{
     const indicator = document.getElementById("typingIndicator");
 
-    if(data.typing){
+    if(data.typing === "admin"){
+        indicator.innerText = "Technician is typing...";
         indicator.style.display="block";
     }else{
         indicator.style.display="none";
     }
 });
+
+}
 
 function sendMessage(){
 

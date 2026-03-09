@@ -242,11 +242,13 @@ fetch("/check-typing/" + bookingId)
 .then(data=>{
     const indicator = document.getElementById("typingIndicator");
 
-    if(data.typing){
-        indicator.style.display="block";
-    }else{
-        indicator.style.display="none";
-    }
+    if(data.typing === "user"){
+    indicator.innerText = "User is typing...";
+    indicator.style.display="block";
+}
+else{
+    indicator.style.display="none";
+}
 });
 }
 
