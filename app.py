@@ -1,5 +1,6 @@
 import os
 import re
+from unittest.mock import DEFAULT
 from flask import Flask, render_template, request, redirect, session
 from datetime import datetime
 import sqlite3
@@ -82,6 +83,8 @@ def init_db():
         created_at TEXT
     )
     """)
+
+    
     conn.commit()
     conn.close()
 
@@ -278,52 +281,47 @@ def signup():
 
 
 
-
 @app.route('/user-login', methods=['GET', 'POST'])
 def user_login():
 
     if session.get('user_id'):
         return redirect('/')
 
+    error = None
+
     if request.method == 'POST':
 
         identifier = request.form['identifier'].strip()
         password = request.form['password'].strip()
 
-# If fields are empty
         if not identifier or not password:
-            return render_template("user_login.html", error="Invalid username or password")
-        conn = sqlite3.connect('database.db')
-        cursor = conn.cursor()
+            error = "Invalid username or password"
+        else:
+            conn = sqlite3.connect('database.db')
+            cursor = conn.cursor()
 
-        cursor.execute("""
-            SELECT id, name, email, mobile, password_hash, profile_image
-            FROM users
-            WHERE email = ? OR mobile = ?
-        """, (identifier, identifier))
+            cursor.execute("""
+                SELECT id, name, email, mobile, password_hash, profile_image
+                FROM users
+                WHERE email = ? OR mobile = ?
+            """, (identifier, identifier))
 
-        user = cursor.fetchone()
-        conn.close()
+            user = cursor.fetchone()
+            conn.close()
 
-        if user:
-            user_id = user[0]
-            user_name = user[1]
-            user_email = user[2]
-            user_mobile = user[3]
-            password_hash = user[4]
-            session['profile_image'] = user[5]
-            if check_password_hash(password_hash, password):
-                session['user_id'] = user_id
-                session['user_name'] = user_name
-                session['user_email'] = user_email
-                session['user_mobile'] = user_mobile
+            if user and check_password_hash(user[4], password):
+                session['user_id'] = user[0]
+                session['user_name'] = user[1]
+                session['user_email'] = user[2]
+                session['user_mobile'] = user[3]
+                session['profile_image'] = user[5]
+
                 return redirect('/')
 
-            return render_template("user_login.html", error="Invalid email or password")
+            else:
+                error = "Invalid email or password"
 
-    return render_template("user_login.html", error="Invalid email or password")
-
-
+    return render_template("user_login.html", error=error)
 
 
 
@@ -754,6 +752,32 @@ def get_messages(booking_id):
 
 
 typing_status = {}
+
+
+
+@app.route('/delete-message/<int:id>', methods=['POST'])
+def delete_message(id):
+
+    if not session.get('admin') and not session.get('user_id'):
+        return jsonify({"success": False})
+
+    conn = sqlite3.connect('database.db')
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE messages
+        SET message = 'This message was deleted',
+            deleted = 1
+        WHERE id = ?
+    """, (id,))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"success": True})
+
+
+
 
 @app.route('/typing', methods=['POST'])
 def typing():
