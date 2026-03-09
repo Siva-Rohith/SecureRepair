@@ -199,6 +199,7 @@ technician is typing...
 <script>
 
 const bookingId = "{{ booking.id }}";
+const userName = "{{ username }}";
 
 function loadMessages(){
 
@@ -243,7 +244,7 @@ fetch("/check-typing/" + bookingId)
     const indicator = document.getElementById("typingIndicator");
 
     if(data.typing === "user"){
-    indicator.innerText = "User is typing...";
+    indicator.innerText = userName + " is typing...";
     indicator.style.display="block";
 }
 else{
